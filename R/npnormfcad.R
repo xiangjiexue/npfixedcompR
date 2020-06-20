@@ -36,7 +36,7 @@ gradientfunction.npnormad = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
   names(ans) = c("d0", "d1", "d2")
   if (order[1] == 1){
     addconst = -sum(x$precompute1 * x$a1 / fullden + x$precompute2 * x$a2 / fullden2) + 2 * length(x$v)
-    ans$d0 = .colSums(pnorm(x$v, rep(mu, rep(length(x$v), length(mu))), sd = x$sd * x$a1 / fullden) +
+    ans$d0 = .colSums(pnorm(x$v, rep(mu, rep(length(x$v), length(mu))), sd = x$s) * x$a1 / fullden +
                         pnorm(x$v, rep(mu, rep(length(x$v), length(mu))), sd = x$sd, lower.tail = FALSE) * x$a2 / fullden2,
                       m = length(x$v), n = length(mu)) * -sum(pi0) + addconst
   }
@@ -90,7 +90,7 @@ computemixdist.npnormad = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
     S1 = crossprod(S, S * x$a1) + crossprod(U, U * x$a2)
     S2 = colSums(S * x$a1) + colSums(U * x$a2)
 
-    newweight = pnnqp(S1, -2 * S2 + crossprod(S, con1 * ss) + crossprod(U, con2 * us), sum = 1 - sum(x$pi0))$x
+    newweight = pnnqp(S1, -2 * S2 + crossprod(S, con1 / ss) + crossprod(U, con2 / us), sum = 1 - sum(x$pi0))$x
     r = checklossfunction(x, mu0new, pi0new, newweight - pi0new, S2 / (1 - sum(x$pi0)))
     r = collapsemix(x, r$pt, r$pr, tol)
     mu0 = r$pt; pi0 = r$pr

@@ -20,6 +20,38 @@ pnpnorm = function(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE
   if (log.p) log(temp) else temp
 }
 
+pnpnorm1 = function(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE){
+  if (length(mu0) != length(pi0))
+    stop("Length mismatch")
+  j0 = pi0 == 0
+  if (sum(!j0) > 0){
+    temp = pnorm(x, mean = rep(mu0[!j0], rep(length(x), sum(!j0))), sd = sd, lower.tail = lower.tail, log.p = TRUE) +
+      rep(log(pi0[!j0]), rep(length(x), sum(!j0)))
+    dim(temp) = c(length(x), sum(!j0))
+    maxcoef = apply(temp, 1, max)
+    temp = log(rowSums(exp(temp - maxcoef))) + maxcoef
+  }else{
+    temp = rep(-Inf, length(x))
+  }
+
+  if (log.p) temp else exp(temp)
+}
+
+logspace.add = function(lx, ly){
+  j0 = lx == -Inf & ly == -Inf
+  ans = pmax(lx, ly) + log1p(exp(-abs(lx - ly)))
+  ans[j0] = -Inf
+  ans
+}
+
+log1mexp = function(x){
+  ifelse(x <= log(2), log(-expm1(-x)), log1p(-exp(-x)))
+}
+
+logspace.sub = function(lx, ly){
+  lx + log1mexp(lx - ly)
+}
+
 # taken from nspmix with modification
 gridpointsnpnorm = function(x, grid=100) {
   rx = range(x$v)

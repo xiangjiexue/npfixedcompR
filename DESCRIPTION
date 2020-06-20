@@ -8,7 +8,7 @@ Authors@R:
            email = "x.xue@auckland.ac.nz")
 Description: What the package does (one paragraph).
 Imports: lsei, goftest
-License: use_gpl3_license()
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)

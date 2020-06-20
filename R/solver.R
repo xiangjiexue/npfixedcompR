@@ -48,8 +48,12 @@ solveestpi0 = function(x, init, val, mix = NULL, tol = 1e-6, maxiter = 100, verb
 
     init = init - d1 / d2
 
-    if ((init - neg) < 0.1 * (pos - neg) | init < neg | (init - neg) > 0.9 * (pos - neg) | init > pos){
-      init = mean(c(pos, neg))
+    if ((init - neg) < 0.1 * (pos - neg) | init < neg){
+      init = (pos - neg) * 0.1 + neg
+    }
+
+    if ((init - neg) > 0.9 * (pos - neg) | init > pos){
+      init = (pos - neg) * 0.9 + neg
     }
 
     x = makeobject(x, mu0 = x$mu0, pi0 = init, beta = x$sd, method = attr(x, "class"))
