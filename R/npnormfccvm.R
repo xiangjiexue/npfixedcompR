@@ -1,11 +1,12 @@
 #' @rdname makeobject
+#' @export
 makeobject.npnormcvm = function(v, mu0 = 0, pi0 = 0, beta = 1){
   if (class(v) == "npnormcvm"){
     # update information
-    v$mu0 = mu0; v$pi0 = pi0; v$sd = beta
-    v$precompute = seq(from = 0.5 / length(v$v), to = 1 - 0.5 / length(v$v), length = length(v$v)) -
-      pnpnorm(v$v, mu0 = mu0, pi0 = pi0, sd = beta)
-    return(v)
+    x = v
+    x$mu0 = mu0; x$pi0 = pi0; x$sd = beta
+    x$precompute = seq(from = 0.5 / length(x$v), to = 1 - 0.5 / length(x$v), length = length(x$v)) -
+      pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = beta)
   }
 
   if (is.numeric(v)){
@@ -13,10 +14,10 @@ makeobject.npnormcvm = function(v, mu0 = 0, pi0 = 0, beta = 1){
     x = list(v = v, mu0 = mu0, pi0 = pi0, sd = beta,
              precompute = seq(from = 0.5 / length(v), to = 1 - 0.5 / length(v), length = length(v)) -
                pnpnorm(v, mu0 = mu0, pi0 = pi0, sd = beta))
-    class(x) = "npnormcvm"
-    return(x)
+    attr(x, "class") = "npnormcvm"
   }
 
+  x
 }
 
 lossfunction.npnormcvm = function(x, mu0, pi0){
@@ -46,6 +47,7 @@ gradientfunction.npnormcvm = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
   ans
 }
 
+#' @export
 computemixdist.npnormcvm = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   if (is.null(mix)){
     rx = range(x$v)
@@ -78,7 +80,7 @@ computemixdist.npnormcvm = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ve
     if (verbose){
       cat("Iteration: ", iter, "\n")
       cat(paste0("Support Point ", round(r$pt, -ceiling(log10(tol))), " with probability ", round(r$pr, -ceiling(log10(tol))), "\n"))
-      cat("Current log-likelihood ", as.character(round(nloss, -ceiling(log10(tol)))), "\n")
+      cat("Current Cramer-von Mises Loss ", as.character(round(nloss, -ceiling(log10(tol)))), "\n")
     }
 
     if (closs - nloss < tol){
@@ -110,18 +112,19 @@ computemixdist.npnormcvm = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ve
 }
 
 #' @rdname estpi0
+#' @export
 estpi0.npnormcvm = function(x, val = qCvM(0.05, lower.tail = FALSE), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
-  x = makeobject(x, mu0 = 0, pi0 = 0, beta = x$sd)
-  r0 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
-  x = makeobject(x, mu0 = 0, pi0 = 1 - tol / 2, beta = x$sd)
+  x = makeobject(x, mu0 = 0, pi0 = 1 - tol / 2, beta = x$sd, method = attr(x, "class"))
   r1 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
+  x = makeobject(x, mu0 = 0, pi0 = 0, beta = x$sd, method = attr(x, "class"))
+  r0 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
 
   if (r1$ll + 1/ 12 / length(x$v) < val){
     r = list(iter = 0,
              family = "npnorm",
              max.gradient = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
              mix = list(pt = 0, pr = 1),
-             ll = sum((pnpnorm(x$v, mu0 = 0, pi0 = 1, sd = x$sd, log = TRUE) - seq(from = 0.5 / length(v), to = 1 - 0.5 / length(v), length = length(v)))^2),
+             ll = lossfunction(x, mu0 = 0, pi0 = 1),
              dd0 = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
              convergence = 0)
   }else{

@@ -6,8 +6,8 @@
 #' @author Xiangjie Xue
 #' @importFrom stats dnorm uniroot pnorm
 #' @importFrom graphics hist
-#' @importFrom lsei pnnls
-#' @importFrom goftest qCvM
+#' @importFrom lsei pnnls pnnqp
+#' @importFrom goftest qCvM qAD
 #' @name npfixedcompR
 NULL
 
@@ -23,14 +23,12 @@ NULL
 #' @param mu0 A vector of support points
 #' @param pi0 A vector of weights corresponding to the support points
 #' @param beta structual parameter
-#' @export
-makeobject = function(v, mu0, pi0, beta){
-  UseMethod("makeobject", v)
-}
-
+#' @param method An implemented family
 #' @rdname makeobject
-makeobject.default = function(v, mu0 = 0, pi0 = 0, beta = 1){
-  makeobject.npnormll(v, mu0, pi0, beta)
+#' @export
+makeobject = function(v, mu0 = 0, pi0 = 0, beta = 1, method = "npnormll"){
+  f = match.fun(paste0("makeobject.", method))
+  f(v = v, mu0 = mu0, pi0 = pi0, beta = beta)
 }
 
 #' loss function

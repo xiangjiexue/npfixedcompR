@@ -1,19 +1,20 @@
 #' @rdname makeobject
+#' @export
 makeobject.npnormll = function(v, mu0 = 0, pi0 = 0, beta = 1){
   if (class(v) == "npnormll"){
     # update information
-    v$mu0 = mu0; v$pi0 = pi0; v$sd = beta
-    v$precompute = dnpnorm(v$v, mu0 = mu0, pi0 = pi0, sd = beta)
-    return(v)
+    x = v
+    x$mu0 = mu0; x$pi0 = pi0; x$sd = beta
+    x$precompute = dnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = beta)
   }
 
   if (is.numeric(v)){
     x = list(v = v, mu0 = mu0, pi0 = pi0, sd = beta,
              precompute = dnpnorm(v, mu0 = mu0, pi0 = pi0, sd = beta))
-    class(x) = "npnormll"
-    return(x)
+    attr(x, "class") = "npnormll"
   }
 
+  x
 }
 
 lossfunction.npnormll = function(x, mu0, pi0){
@@ -42,6 +43,7 @@ gradientfunction.npnormll = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
   ans
 }
 
+#' @export
 computemixdist.npnormll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   if (is.null(mix)){
     rx = range(x$v)
@@ -111,18 +113,19 @@ computemixdist.npnormll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
 }
 
 #' @rdname estpi0
+#' @export
 estpi0.npnormll = function(x, val = 0.5 * log(length(x$v)), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
-  x = makeobject(x, mu0 = 0, pi0 = 0, beta = x$sd)
-  r0 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
-  x = makeobject(x, mu0 = 0, pi0 = 1 - tol / 2, beta = x$sd)
+  x = makeobject(x, mu0 = 0, pi0 = 1 - tol / 2, beta = x$sd, method = attr(x, "class"))
   r1 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
+  x = makeobject(x, mu0 = 0, pi0 = 0, beta = x$sd, method = attr(x, "class"))
+  r0 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
 
   if (r1$ll - r0$ll < val){
     r = list(iter = 0,
              family = "npnorm",
              max.gradient = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
              mix = list(pt = 0, pr = 1),
-             ll = -sum(dnpnorm(x$v, mu0 = 0, pi0 = 1, sd = x$sd, log = TRUE)),
+             ll = lossfunction(x, mu0 = 0, pi0 = 1),
              dd0 = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
              convergence = 0)
   }else{
