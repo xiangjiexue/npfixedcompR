@@ -1,3 +1,5 @@
+# This file contains general functions used in npnorm family
+
 dnpnorm = function(x, mu0 = 0, pi0 = 1, sd = 1, log = FALSE){
   # This version explicitly allow subprobability measures.
   # Hence no check on pi0
@@ -8,10 +10,14 @@ dnpnorm = function(x, mu0 = 0, pi0 = 1, sd = 1, log = FALSE){
   if (log) log(temp) else temp
 }
 
-npnorm = function(v, w = 1, mu0 = 0, pi0 = 0, sd = 1, method = "npnormfcll"){
-  x = list(v = v, w = rep(w, length.out = length(v)), mu0 = mu0, pi0 = pi0, sd = sd)
-  class(x) = method
-  x
+pnpnorm = function(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE){
+  # This version explicitly allow subprobability measures.
+  # Hence no check on pi0
+  if (length(mu0) != length(pi0))
+    stop("Length mismatch")
+  temp = .rowSums(pnorm(x, mean = rep(mu0, rep(length(x), length(mu0))), sd = sd, lower.tail = lower.tail) *
+                    rep(pi0, rep(length(x), length(pi0))), m = length(x), n = length(mu0))
+  if (log.p) log(temp) else temp
 }
 
 # taken from nspmix with modification

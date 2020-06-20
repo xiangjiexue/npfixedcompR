@@ -1,51 +1,55 @@
 #' @rdname makeobject
-makeobject.npnormll = function(v, mu0 = 0, pi0 = 0, beta = 1){
-  if (class(v) == "npnormll"){
+makeobject.npnormcvm = function(v, mu0 = 0, pi0 = 0, beta = 1){
+  if (class(v) == "npnormcvm"){
     # update information
     v$mu0 = mu0; v$pi0 = pi0; v$sd = beta
-    v$precompute = dnpnorm(v$v, mu0 = mu0, pi0 = pi0, sd = beta)
+    v$precompute = seq(from = 0.5 / length(v$v), to = 1 - 0.5 / length(v$v), length = length(v$v)) -
+      pnpnorm(v$v, mu0 = mu0, pi0 = pi0, sd = beta)
     return(v)
   }
 
   if (is.numeric(v)){
+    v = sort(v, decreasing = FALSE)
     x = list(v = v, mu0 = mu0, pi0 = pi0, sd = beta,
-             precompute = dnpnorm(v, mu0 = mu0, pi0 = pi0, sd = beta))
-    class(x) = "npnormll"
+             precompute = seq(from = 0.5 / length(v), to = 1 - 0.5 / length(v), length = length(v)) -
+               pnpnorm(v, mu0 = mu0, pi0 = pi0, sd = beta))
+    class(x) = "npnormcvm"
     return(x)
   }
 
 }
 
-lossfunction.npnormll = function(x, mu0, pi0){
-  -sum(log(dnpnorm(x$v, mu0 = mu0, pi0 = pi0, x$sd) + x$precompute))
+lossfunction.npnormcvm = function(x, mu0, pi0){
+  sum((pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd) - x$precompute)^2)
 }
 
-gradientfunction.npnormll = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
-  flexden = dnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd)
-  temp = dnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$sd) * sum(pi0)
-  fullden = flexden + x$precompute
+gradientfunction.npnormcvm = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
+  flexden = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd)
+  fullden = flexden - x$precompute
   ans = vector("list", 3)
   names(ans) = c("d0", "d1", "d2")
-  if (any(order[2:3] == 1)){
-    xminusmu = rep(mu, rep(length(x$v), length(mu))) - x$v
-  }
   if (order[1] == 1){
-    ans$d0 = .colSums((flexden - temp) / fullden, m = length(x$v), n = length(mu))
+    temp = pnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$sd) * sum(pi0)
+    ans$d0 = .colSums((temp - flexden) * fullden, m = length(x$v), n = length(mu))
+  }
+  if (any(order[2:3] == 1)){
+    temp = dnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$sd) * sum(pi0)
   }
   if (order[2] == 1){
-    ans$d1 = .colSums(temp * xminusmu / fullden, m = length(x$v), n = length(mu)) / x$sd^2
+    ans$d1 = .colSums(temp * fullden, m = length(x$v), n = length(mu)) * -2
   }
   if (order[3] == 1){
-    ans$d2 = .colSums(temp * (xminusmu^2 - x$sd^2) / fullden, m = length(x$v), n = length(mu)) / x$sd^4
+    xminusmu = x$v - rep(mu, rep(length(x$v), length(mu)))
+    ans$d2 = .colSums(temp * xminusmu * fullden, m = length(x$v), n = length(mu)) * -2
   }
 
   ans
 }
 
-computemixdist.npnormll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
+computemixdist.npnormcvm = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   if (is.null(mix)){
     rx = range(x$v)
-    breaks = pmax(ceiling(diff(rx) / (5 * x$sd)), 10)   # number of breaks
+    breaks = pmax(ceiling(diff(rx) / (5 * x$sd)), 5)   # number of breaks
     r = hist(x$v, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
     r$density = pmax(0, r$density - pnpnorm(r$breaks[-1], mu0 = x$mu0, pi0 = x$pi0, sd = x$sd) +
                        pnpnorm(r$breaks[-length(r$breaks)], mu0 = x$mu0, pi0 = x$pi0, sd = x$sd))
@@ -59,19 +63,14 @@ computemixdist.npnormll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
 
   iter = 0; convergence = 0
   closs = lossfunction(x, mu0, pi0)
-  points = gridpointsnpnorm(x)
+  points = c(min(x$v) - 3 * x$sd, gridpointsnpnorm(x), max(x$v) + 3 * x$sd)
 
   repeat{
     mu0new = c(mu0, solvegradientmultiple(x, mu0, pi0, points, tol))
-    pi0new = c(pi0, rep(0, length.out = length(mu0new) - length(mu0)))
-    sp = dnorm(x$v, mean = rep(mu0new, rep(length(x$v), length(mu0new))), sd = x$sd)
-    fp = .rowSums(sp[1:(length(x$v) * length(mu0))] * rep(pi0, rep(length(x$v), length(pi0))), m = length(x$v), n = length(pi0)) + x$precompute
-    S = sp / fp
-    dim(S) = c(length(x$v), length(pi0new))
-    a = 2 - x$precompute / fp
-    newweight = pnnls(S, a, sum = 1 - sum(x$pi0))$x
-    r = checklossfunction(x, mu0new, pi0new, newweight - pi0new, colSums(S) / (1 - sum(x$pi0)))
-    r = collapsemix(x, r$pt, r$pr, tol)
+    S = pnorm(x$v, mean = rep(mu0new, rep(length(x$v), length(mu0new))), sd = x$sd)
+    dim(S) = c(length(x$v), length(mu0new))
+    pi0new = pnnls(S, x$precompute, sum = 1 - sum(x$pi0))$x
+    r = collapsemix(x, mu0new, pi0new, tol)
     mu0 = r$pt; pi0 = r$pr
     iter = iter + 1
     nloss = lossfunction(x, mu0, pi0)
@@ -79,7 +78,7 @@ computemixdist.npnormll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
     if (verbose){
       cat("Iteration: ", iter, "\n")
       cat(paste0("Support Point ", round(r$pt, -ceiling(log10(tol))), " with probability ", round(r$pr, -ceiling(log10(tol))), "\n"))
-      cat("Current log-likelihood ", as.character(round(-nloss, -ceiling(log10(tol)))), "\n")
+      cat("Current log-likelihood ", as.character(round(nloss, -ceiling(log10(tol)))), "\n")
     }
 
     if (closs - nloss < tol){
@@ -111,23 +110,23 @@ computemixdist.npnormll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
 }
 
 #' @rdname estpi0
-estpi0.npnormll = function(x, val = 0.5 * log(length(x$v)), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
+estpi0.npnormcvm = function(x, val = qCvM(0.05, lower.tail = FALSE), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   x = makeobject(x, mu0 = 0, pi0 = 0, beta = x$sd)
   r0 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
   x = makeobject(x, mu0 = 0, pi0 = 1 - tol / 2, beta = x$sd)
   r1 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
 
-  if (r1$ll - r0$ll < val){
+  if (r1$ll + 1/ 12 / length(x$v) < val){
     r = list(iter = 0,
              family = "npnorm",
              max.gradient = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
              mix = list(pt = 0, pr = 1),
-             ll = -sum(dnpnorm(x$v, mu0 = 0, pi0 = 1, sd = x$sd, log = TRUE)),
+             ll = sum((pnpnorm(x$v, mu0 = 0, pi0 = 1, sd = x$sd, log = TRUE) - seq(from = 0.5 / length(v), to = 1 - 0.5 / length(v), length = length(v)))^2),
              dd0 = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
              convergence = 0)
   }else{
     r = solveestpi0(x = x, init = dnpnorm(0, mu0 = r0$mix$pt, pi0 = r0$mix$pr, sd = x$sd) * sqrt(2 * base::pi) * x$sd,
-                    val = -r0$ll - val, mix = r0$mix, tol = tol, maxiter = maxiter, verbose = verbose)
+                    val = 1/ 12 / length(x$v) - val, mix = r0$mix, tol = tol, maxiter = maxiter, verbose = verbose)
   }
 
   r

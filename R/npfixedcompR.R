@@ -4,11 +4,45 @@
 #'
 #' @docType package
 #' @author Xiangjie Xue
-#' @importFrom stats dnorm uniroot
+#' @importFrom stats dnorm uniroot pnorm
+#' @importFrom graphics hist
 #' @importFrom lsei pnnls
+#' @importFrom goftest qCvM
 #' @name npfixedcompR
-#' NULL
+NULL
 
+#' make object for computation
+#'
+#' This is a S3 generic function for making the object for computing the non-parametric
+#' mixing distribution
+#'
+#' The default method used is npnormfcll.
+#'
+#' @title make object for computation
+#' @param v the object either numeric or the implmented family
+#' @param mu0 A vector of support points
+#' @param pi0 A vector of weights corresponding to the support points
+#' @param beta structual parameter
+#' @export
+makeobject = function(v, mu0, pi0, beta){
+  UseMethod("makeobject", v)
+}
+
+#' @rdname makeobject
+makeobject.default = function(v, mu0 = 0, pi0 = 0, beta = 1){
+  makeobject.npnormll(v, mu0, pi0, beta)
+}
+
+#' loss function
+#'
+#' This is a S3 generic loss function for computing minimisation problem in order to find
+#' non-parametric estimator
+#'
+#' @title loss function
+#' @param x a object from implemented family
+#' @param mu0 a vector of support points
+#' @param pi0 a vector of weights corresponding to the support points
+#' @export
 lossfunction = function(x, mu0, pi0){
   UseMethod("lossfunction", x)
 }
@@ -17,12 +51,50 @@ lossfunction = function(x, mu0, pi0){
 #' gradient function
 #'
 #' This is a S3 generic function returning gradident function with order specified as a list
+#'
+#' @title The gradient function
+#' @param x a object from implemented family
+#' @param mu a vector of locations to look for
+#' @param mu0 a vector of support points
+#' @param pi0 a vector of weights corresponding to the support points
+#' @param order a vector of length 3 with either 1 or 0. 1 to compute, 0 not to compute.
+#' @return a list of length 3. d0, d1, d2 correspond to the order.
+#' @export
 gradientfunction = function(x, mu, mu0, pi0, order){
   UseMethod("gradientfunction", x)
 }
 
+#' computing non-parametric mixing distribution
+#'
+#' This is a S3 generic function for computing non-parametric mixing distribution
+#'
+#' @title Computing non-parametric mixing distribution
+#' @param x a object from implemented family
+#' @param mix initial mixing distribution (proper)
+#' @param tol tolerance to stop the code
+#' @param maxiter maximum iteration to stop the code
+#' @param verbose logical. If TRUE, the intermediate results will be printed.
+#' @export
 computemixdist = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   UseMethod("computemixdist")
+}
+
+#' computing non-parametric mixing distribution with estimated proportion at 0
+#'
+#' This is a S3 generic function for computing non-parametric mixing
+#' distribution with estimated proportion at 0. Different families will
+#' have different threshold value.
+#'
+#' @title Computing non-parametric mixing distribution with estimated proportion at 0
+#' @param x a object from implemented family
+#' @param val the threshold value.
+#' @param mix initial mixing distribution (proper)
+#' @param tol tolerance to stop the code
+#' @param maxiter maximum iteration to stop the code
+#' @param verbose logical. If TRUE, the intermediate results will be printed.
+#' @export
+estpi0 = function(x, val, mix, tol, maxiter, verbose){
+  UseMethod("estpi0")
 }
 
 # Taken from nspmix with modification
