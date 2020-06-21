@@ -36,11 +36,11 @@ gradientfunction.npnormll = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
     ans$d0 = .colSums((flexden - temp) / fullden, m = length(x$v), n = length(mu))
   }
   if (any(order[2:3] == 1)){
-    xminusmu = rep(mu, rep(length(x$v), length(mu))) - x$v
+    xminusmu = x$v - rep(mu, rep(length(x$v), length(mu)))
     temp2 = temp / fullden
   }
   if (order[2] == 1){
-    ans$d1 = .colSums(temp2 * xminusmu, m = length(x$v), n = length(mu)) / x$beta^2
+    ans$d1 = .colSums(temp2 * xminusmu, m = length(x$v), n = length(mu)) / -x$beta^2
   }
   if (order[3] == 1){
     ans$d2 = .colSums(temp2 * (xminusmu^2 - x$beta^2), m = length(x$v), n = length(mu)) / x$beta^4
@@ -112,7 +112,7 @@ computemixdist.npnormll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
              mix = list(pt = r$pt, pr = r$pr),
              ll = nloss,
              beta = x$beta,
-             dd0 = gradientfunction(x, 0, r$pt, r$pr, order = c(1, 0, 0))$d0,
+             dd0 = gradientfunction(x, 0, mu0, pi0, order = c(1, 0, 0))$d0,
              convergence = convergence)
 
   attr(ans, "class") = "nspmix"

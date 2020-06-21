@@ -109,7 +109,7 @@ computemixdist.npnormcvmw = function(x, mix = NULL, tol = 1e-6, maxiter = 100, v
              max.gradient = min(gradientfunction(x, mu0, mu0, pi0, order = c(1, 0, 0))$d0),
              mix = list(pt = r$pt, pr = r$pr),
              ll = nloss,
-             dd0 = gradientfunction(x, 0, r$pt, r$pr, order = c(1, 0, 0))$d0,
+             dd0 = gradientfunction(x, 0, mu0, pi0, order = c(1, 0, 0))$d0,
              h = x$h,
              beta = x$beta,
              convergence = convergence)
