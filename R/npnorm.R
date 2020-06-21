@@ -100,3 +100,37 @@ gridpointsnpnorm = function(x, grid=100) {
   s = r$breaks[-length(r$breaks)][i]
   sort(c(rx[1], rep(s, rep(k,m)) + d * (1:k-0.5)/k, rx[2]), decreasing = FALSE)
 }
+
+FDRnpnorm = function(neg, pos, result){
+  # There might be multiple support points at 0 with no reason. Do sum instead.
+  (pnorm(neg, sd = result$beta, lower.tail = TRUE) +
+     pnorm(pos, sd = result$beta, lower.tail = FALSE)) * result$mix$pr[result$mix$pt == 0] /
+    (pnpnorm(neg, result$mix$pt, result$mix$pr, sd = result$beta) +
+       pnpnorm(pos, result$mix$pt, result$mix$pr, sd = result$beta, lower.tail = FALSE))
+}
+
+
+#' Find the rejection region with normal density
+#'
+#' Find the rejection region assuming normal component from the npnormfc object.
+#' The rejection region is calculated using the density estimate rather than data points hence robust.
+#' The rejection is based on the hypothesis is located at 0.
+#' The optimisation is done via NLopt library (The package nloptr)
+#'
+#' @title Find the rejection region with normal density
+#' @param result an object of npnorm
+#' @param alpha the FDR controlling rate.
+#' @return a list with par is the boundary for rejection and area is the propotion of rejection
+#' @export
+rejectregion.npnorm = function(result, alpha = 0.05){
+  # object check done via npnormfc2npnorm
+  ans = nloptr(c(-1, 1), function(vec, result, alpha){
+    v = tan(vec)
+    -pnpnorm(v[1], result$mix$pt, result$mix$pr, result$beta, TRUE) -
+      pnpnorm1(v[2], result$mix$pt, result$mix$pr, result$beta, FALSE)
+  }, lb = c(-base::pi / 2, 0), ub = c(0, base::pi / 2), eval_g_ineq = function(vec, result, alpha){
+    v = tan(vec)
+    FDRnpnorm(v[1], v[2], result) - alpha
+  }, result = result, alpha = alpha, opts = list(algorithm = "NLOPT_GN_ORIG_DIRECT", xtol_rel = 1e-4))
+  list(par = tan(ans$solution), area = -ans$objective)
+}

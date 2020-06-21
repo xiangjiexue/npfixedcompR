@@ -2,7 +2,7 @@
 % Please edit documentation in R/npfixedcompR.R
 \name{lossfunction}
 \alias{lossfunction}
-\title{loss function}
+\title{loss functions for non-parametric minimisation problems}
 \usage{
 lossfunction(x, mu0, pi0)
 }
@@ -14,9 +14,9 @@ lossfunction(x, mu0, pi0)
 \item{pi0}{a vector of weights corresponding to the support points}
 }
 \description{
-loss function
+The loss functions for computing loss.
 }
 \details{
-This is a S3 generic loss function for computing minimisation problem in order to find
-non-parametric estimator
+This is a S3 generic function for computing loss function in a minimisation problem.
+The full list of implemented family is in \code{\link{makeobject}}.
 }

@@ -97,5 +97,7 @@ computing non-parametric mixing distribution with estimated proportion at 0
 \details{
 This is a S3 generic function for computing non-parametric mixing
 distribution with estimated proportion at 0. Different families will
-have different threshold value.
+have different threshold values.
+
+The full list of implemented family is in \code{\link{makeobject}}.
 }

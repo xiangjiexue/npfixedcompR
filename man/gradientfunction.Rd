@@ -21,8 +21,20 @@ gradientfunction(x, mu, mu0, pi0, order)
 a list of length 3. d0, d1, d2 correspond to the order.
 }
 \description{
-gradient function
+This is a S3 generic function for computing the gradient function and/or its derivatives
 }
 \details{
-This is a S3 generic function returning gradident function with order specified as a list
+The computation of the gradient function and/or its derivative is computed by specification
+of order. For example, \code{order = c(0, 1, 1)} computes the first and second derivative of
+the gradident function but not the function itself. At least \code{order = c(1, 0, 0)} must
+be implemented.
+
+When finding the new support points, the function \code{solvegradientmultiple} can choose
+the algorithms automatically by specifying \code{method = "auto"} and the algorithm is chosen
+based on the minimal working output in the family. Alternatively, if a user know which algorithm
+is most efficient, the specification of algorithm can be made by \code{method = "d0"}
+(derivative-free minimisation), \code{method = "d1"} (derivative-free root finding) and
+\code{method = "d1"} (root-finding using first derivative.).
+
+The full list of implemented family is in \code{\link{makeobject}}.
 }

@@ -11,7 +11,7 @@
 \alias{makeobject.npnormll}
 \alias{makeobject.npnormllw}
 \alias{makeobject.nptll}
-\title{make object for computation}
+\title{Making object for computation}
 \usage{
 makeobject(v, mu0 = 0, pi0 = 0, beta = 1, method = "npnormll", ...)
 
@@ -38,18 +38,30 @@ makeobject.nptll(v, mu0, pi0, beta)
 
 \item{beta}{structual parameter.}
 
-\item{method}{An implemented family}
+\item{method}{An implemented family; see details}
 
 \item{...}{other parameter passed to the constructor.}
 
 \item{order}{the parameter for the binned version.}
 }
 \description{
-make object for computation
+These functions are used to make the object for computing the non-paramtric mixing
+distribution or estimating the proportion of zero using non-parametric methods.
 }
 \details{
 This is a S3 generic function for making the object for computing the non-parametric
-mixing distribution
+mixing distribution or estimating the proportion of zero.
 
-The default method used is npnormfcll.
+currently implemented families are:
+\itemize{
+\item npnormll : normal density using maximum likelihood
+\item npnormllw : Binned version of normal density using maximum likelihood
+\item npnormcvm : normal density using Cramer-von Mises
+\item npnormcvmw : Binned version of normal density using Cramer-von Mises
+\item npnormad : normal density using Anderson-Darling
+\item npnormadw : Binned version of normal density using Anderson-Darling
+\item nptll : t density using maximum likelihood
+}
+
+The default method used is npnormll.
 }

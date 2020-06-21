@@ -166,3 +166,35 @@ estpi0.nptll = function(x, val = 0.5 * log(length(x$v)), mix = NULL, tol = 1e-6,
 
   r
 }
+
+#' Find the rejection region with t density
+#'
+#' Find the rejection region assuming t component from the nptfc object.
+#' The rejection region is calculated using the density estimate rather than data points hence robust.
+#' The rejection is based on the hypothesis is located at 0.
+#' The optimisation is done via NLopt library (The package nloptr)
+#'
+#' @title Find the rejection region with t density
+#' @param result an object of nptfc
+#' @param alpha the FDR controlling rate.
+#' @return a list with par is the boundary for rejection and area is the propotion of rejection
+#' @export
+rejectregion.npt = function(result, alpha = 0.05){
+  # object check done via nptfc2npt
+  ans = nloptr(c(-1, 1), function(vec, result, alpha){
+    v = tan(vec)
+    -pnpt(v[1], result$mix$pt, result$mix$pr, result$beta, TRUE) -
+      pnpt(v[2], result$mix$pt, result$mix$pr, result$beta, FALSE)
+  }, lb = c(-base::pi / 2, 0), ub = c(0, base::pi / 2), eval_g_ineq = function(vec, result, alpha){
+    v = tan(vec)
+    FDRnpt(v[1], v[2], result) - alpha
+  }, result = result, alpha = alpha, opts = list(algorithm = "NLOPT_GN_ORIG_DIRECT", xtol_rel = 1e-4))
+  list(par = tan(ans$solution), area = -ans$objective)
+}
+
+FDRnpt = function(neg, pos, result){
+  (pt(neg, df = result$beta, lower.tail = TRUE) +
+     pt(pos, df = result$beta, lower.tail = FALSE)) * result$mix$pr[result$mix$pt == 0]/
+    (pnpt(neg, result$mix$pt, result$mix$pr, df = result$beta, lower.tail = TRUE) +
+       pnpt(pos, result$mix$pt, result$mix$pr, df = result$beta, lower.tail = FALSE))
+}

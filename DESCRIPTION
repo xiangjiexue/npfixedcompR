@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "x.xue@auckland.ac.nz")
 Description: What the package does (one paragraph).
-Imports: lsei, goftest
+Imports: lsei, goftest, nloptr
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
