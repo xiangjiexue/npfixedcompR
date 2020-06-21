@@ -1,52 +1,52 @@
 #' @rdname makeobject
 #' @export
-makeobject.npnormad = function(v, mu0 = 0, pi0 = 0, beta = 1){
-  if (class(v) == "npnormad"){
+makeobject.npnormadw = function(v, mu0 = 0, pi0 = 0, beta = 1, order = -4){
+  if (class(v) == "npnormadw"){
     # update information
     x = v
     x$mu0 = mu0; x$pi0 = pi0; x$sd = beta
-    x$precompute1 = pnpnorm(v$v, mu0 = mu0, pi0 = pi0, sd = beta)
-    x$precompute2 = pnpnorm(v$v, mu0 = mu0, pi0 = pi0, sd = beta, lower.tail = FALSE)
+    x$precompute1 = pnpdiscnorm(v$v, mu0 = mu0, pi0 = pi0, sd = beta, h = x$h)
+    x$precompute2 = pnpdiscnorm(v$v, mu0 = mu0, pi0 = pi0, sd = beta, lower.tail = FALSE, h = x$h)
   }
 
   if (is.numeric(v)){
-    v = sort(v, decreasing = FALSE)
-    x = list(v = v, mu0 = mu0, pi0 = pi0, sd = beta,
-             a1 = seq(from = 1 / length(v), to = (2 * length(v) - 1) / length(v), length = length(v)),
-             a2 = seq(from = (2 * length(v) - 1) / length(v), to = 1 / length(v), length = length(v)),
-             precompute1 = pnpnorm(v, mu0 = mu0, pi0 = pi0, sd = beta),
-             precompute2 = pnpnorm(v, mu0 = mu0, pi0 = pi0, sd = beta, lower.tail = FALSE))
-    attr(x, "class") = "npnormad"
+    bindata = bin(v, order = order)
+    x = list(v = bindata$v, w = bindata$w, mu0 = mu0, pi0 = pi0, sd = beta, h = 10^order,
+             a1 = (2 * cumsum(bindata$w) - 1) / sum(bindata$w) * bindata$w,
+             a2 = (2 + (-2 * cumsum(bindata$w) + 1) / sum(bindata$w)) * bindata$w,
+             precompute1 = pnpdiscnorm(bindata$v, mu0 = mu0, pi0 = pi0, sd = beta, h = 10^order),
+             precompute2 = pnpdiscnorm(bindata$v, mu0 = mu0, pi0 = pi0, sd = beta, lower.tail = FALSE, h = 10^order))
+    attr(x, "class") = "npnormadw"
   }
 
   x
 }
 
-lossfunction.npnormad = function(x, mu0, pi0){
-  temp = pnpnorm(x$v, mu0, pi0, x$sd) + x$precompute1
+lossfunction.npnormadw = function(x, mu0, pi0){
+  temp = pnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd, h = x$h) + x$precompute1
   -sum(log(temp) * x$a1 + log1p(-temp) * x$a2)
 }
 
-gradientfunction.npnormad = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
-  flexden = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd)
-  flexden2 = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd, lower.tail = FALSE)
+gradientfunction.npnormadw = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
+  flexden = pnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd, h = x$h)
+  flexden2 = pnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd, lower.tail = FALSE, h = x$h)
   fullden = flexden + x$precompute1
   fullden2 = flexden2 + x$precompute2
   ans = vector("list", 3)
   names(ans) = c("d0", "d1", "d2")
   if (order[1] == 1){
-    addconst = -sum(x$precompute1 * x$a1 / fullden + x$precompute2 * x$a2 / fullden2) + 2 * length(x$v)
-    ans$d0 = .colSums(pnorm(x$v, rep(mu, rep(length(x$v), length(mu))), sd = x$sd) * x$a1 / fullden +
-                        pnorm(x$v, rep(mu, rep(length(x$v), length(mu))), sd = x$sd, lower.tail = FALSE) * x$a2 / fullden2,
+    addconst = -sum(x$precompute1 * x$a1 / fullden + x$precompute2 * x$a2 / fullden2) + 2 * sum(x$w)
+    ans$d0 = .colSums(pdiscnorm(x$v, rep(mu, rep(length(x$v), length(mu))), sd = x$sd, h = x$h) * x$a1 / fullden +
+                        pdiscnorm(x$v, rep(mu, rep(length(x$v), length(mu))), sd = x$sd, lower.tail = FALSE, h = x$h) * x$a2 / fullden2,
                       m = length(x$v), n = length(mu)) * -sum(pi0) + addconst
   }
   if (order[2] == 1){
-    ans$d1 = .colSums(dnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$sd) *
+    ans$d1 = .colSums(dnorm(x$v + x$h, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$sd) *
                         (x$a1 / fullden - x$a2 / fullden2), m = length(x$v), n = length(mu)) * sum(pi0)
   }
   if (order[3] == 1){
-    xminusmu = x$v - rep(mu, rep(length(x$v), length(mu)))
-    ans$d2 = .colSums(xminusmu * dnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$sd) *
+    xminusmu = x$v + x$h - rep(mu, rep(length(x$v), length(mu)))
+    ans$d2 = .colSums(xminusmu * dnorm(x$v + x$h, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$sd) *
                         (x$a1 / fullden - x$a2 / fullden2), m = length(x$v), n = length(mu)) * sum(pi0) / x$sd^2
   }
 
@@ -54,11 +54,11 @@ gradientfunction.npnormad = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
 }
 
 #' @export
-computemixdist.npnormad = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
+computemixdist.npnormadw = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   if (is.null(mix)){
     rx = range(x$v)
     breaks = pmax(ceiling(diff(rx) / (5 * x$sd)), 10)   # number of breaks
-    r = whist(x$v, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
+    r = whist(x$v, x$w, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
     r$density = pmax(0, r$density - pnpnorm(r$breaks[-1], mu0 = x$mu0, pi0 = x$pi0, sd = x$sd) +
                        pnpnorm(r$breaks[-length(r$breaks)], mu0 = x$mu0, pi0 = x$pi0, sd = x$sd))
     mu0 = r$mids[r$density != 0]
@@ -71,18 +71,18 @@ computemixdist.npnormad = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
 
   iter = 0; convergence = 0
   closs = lossfunction(x, mu0, pi0)
-  points = c(min(x$v) - (5:1) * x$sd, gridpointsnpnorm(x), max(x$v) + 1:5 * x$sd)
+  points = c(min(x$v) - 3 * x$sd, gridpointsnpnorm(x), max(x$v) + 3 * x$sd)
   con1 = x$precompute1 * x$a1; con2 = x$precompute2 * x$a2
 
   repeat{
     mu0new = c(mu0, solvegradientmultiple(x, mu0, pi0, points, tol))
     pi0new = c(pi0, rep(0, length.out = length(mu0new) - length(mu0)))
-    sf = pnorm(x$v, mean = rep(mu0new, rep(length(x$v), length(mu0new))), sd = x$sd)
+    sf = pdiscnorm(x$v, mean = rep(mu0new, rep(length(x$v), length(mu0new))), sd = x$sd, h = x$h)
     ss = .rowSums(sf[1:(length(x$v) * length(mu0))] * rep(pi0, rep(length(x$v), length(pi0))), m = length(x$v), n = length(pi0)) + x$precompute1
     S = sf / ss
     dim(S) = c(length(x$v), length(pi0new))
 
-    uf = pnorm(x$v, mean = rep(mu0new, rep(length(x$v), length(mu0new))), sd = x$sd, lower.tail = FALSE)
+    uf = pdiscnorm(x$v, mean = rep(mu0new, rep(length(x$v), length(mu0new))), sd = x$sd, lower.tail = FALSE, h = x$h)
     us = .rowSums(uf[1:(length(x$v) * length(mu0))] * rep(pi0, rep(length(x$v), length(pi0))), m = length(x$v), n = length(pi0)) + x$precompute2
     U = uf / us
     dim(U) = c(length(x$v), length(pi0new))
@@ -133,13 +133,13 @@ computemixdist.npnormad = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
 
 #' @rdname estpi0
 #' @export
-estpi0.npnormad = function(x, val = qAD(0.05, lower.tail = FALSE), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
+estpi0.npnormadw = function(x, val = qAD(0.05, lower.tail = FALSE), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   x = makeobject(x, mu0 = 0, pi0 = 1 - tol / 2, beta = x$sd, method = attr(x, "class"))
   r1 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
   x = makeobject(x, mu0 = 0, pi0 = 0, beta = x$sd, method = attr(x, "class"))
   r0 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
 
-  if (r1$ll - length(x$v) < val){
+  if (r1$ll - sum(x$w) < val){
     r = list(iter = 0,
              family = "npnorm",
              max.gradient = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
@@ -148,8 +148,8 @@ estpi0.npnormad = function(x, val = qAD(0.05, lower.tail = FALSE), mix = NULL, t
              dd0 = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
              convergence = 0)
   }else{
-    r = solveestpi0(x = x, init = dnpnorm(0, mu0 = r0$mix$pt, pi0 = r0$mix$pr, sd = x$sd) * sqrt(2 * base::pi) * x$sd,
-                    val = -length(x$v) - val, mix = r0$mix, tol = tol, maxiter = maxiter, verbose = verbose)
+    r = solveestpi0(x = x, init = dnpdiscnorm(0, mu0 = r0$mix$pt, pi0 = r0$mix$pr, sd = x$sd, h = x$h) / ddiscnorm(0, sd = x$sd, h = x$h),
+                    val = -sum(x$w) - val, mix = r0$mix, tol = tol, maxiter = maxiter, verbose = verbose)
   }
 
   r

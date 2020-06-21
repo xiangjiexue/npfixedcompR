@@ -24,11 +24,12 @@ NULL
 #' @param pi0 A vector of weights corresponding to the support points
 #' @param beta structual parameter
 #' @param method An implemented family
+#' @param ... other parameter passed to the constructor.
 #' @rdname makeobject
 #' @export
-makeobject = function(v, mu0 = 0, pi0 = 0, beta = 1, method = "npnormll"){
+makeobject = function(v, mu0 = 0, pi0 = 0, beta = 1, method = "npnormll", ...){
   f = match.fun(paste0("makeobject.", method))
-  f(v = v, mu0 = mu0, pi0 = pi0, beta = beta)
+  f(v = v, mu0 = mu0, pi0 = pi0, beta = beta, ...)
 }
 
 #' loss function
@@ -157,4 +158,28 @@ collapsemix = function(x, mu0, pi0, tol = 1e-6){
     }
   }
   list(pt = mu0, pr = pi0)
+}
+
+#' Bin the continuous data.
+#'
+#' This function bins the continuous data using the equal-width bin in order to
+#' speed up some functions in this package.
+#'
+#' h is taken as 10^(-order)
+#'
+#' the observations are rounded down to the bins ..., -h, 0, h, ...
+#'
+#' To further speed up the process, omit the bin that has 0 count.
+#'
+#' @title Bin the continuous data.
+#' @param data the observation to be binned.
+#' @param order see the details
+#' @return a list with v be the representative value of each bin and w be the count in the corresponding bin.
+#' @export
+bin = function(data, order = -5){
+  h = 10^order
+  data = floor(data / h) * h
+  t = table(data)
+  index = t != 0
+  list(v = as.numeric(names(t))[index], w = as.numeric(t)[index])
 }

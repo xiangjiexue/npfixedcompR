@@ -23,7 +23,8 @@ solvegradientmultiple = function(x, mu0, pi0, points, tol = 1e-6){
 # find the proportion of zero in the context of minimisation problem
 # pi0 = 0 should always be negative
 solveestpi0 = function(x, init, val, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
-  neg = 0; pos = 1
+  neg = 0; pos = 1 - tol / 2
+  negval = NA; posval = NA
   iter = 1;
   x = makeobject(x, mu0 = x$mu0, pi0 = init, beta = x$sd, method = attr(x, "class"))
   r = computemixdist(x, mix = mix, maxiter = maxiter, tol = tol)
@@ -42,18 +43,29 @@ solveestpi0 = function(x, init, val, mix = NULL, tol = 1e-6, maxiter = 100, verb
     iter = iter + 1
     if (d1 < 0){
       neg = max(neg, init)
+      negval = max(negval, d1, na.rm = TRUE)
     }else{
       pos = min(pos, init)
+      posval = min(posval, d1, na.rm = TRUE)
     }
 
     init = init - d1 / d2
 
     if ((init - neg) < 0.1 * (pos - neg) | init < neg){
-      init = (pos - neg) * 0.1 + neg
+      if (!is.na(negval) & !is.na(posval)){
+        init = (1 + negval / (posval - negval)) * neg + (1 - posval / (posval - negval)) * pos
+      }else{
+        init = (pos - neg) * 0.1 + neg
+      }
+
     }
 
     if ((init - neg) > 0.9 * (pos - neg) | init > pos){
-      init = (pos - neg) * 0.9 + neg
+      if (!is.na(negval) & !is.na(posval)){
+        init = (1 + negval / (posval - negval)) * neg + (1 - posval / (posval - negval)) * pos
+      }else{
+        init = (pos - neg) * 0.9 + neg
+      }
     }
 
     x = makeobject(x, mu0 = x$mu0, pi0 = init, beta = x$sd, method = attr(x, "class"))

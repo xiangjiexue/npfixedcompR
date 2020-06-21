@@ -1,58 +1,58 @@
 #' @rdname makeobject
 #' @export
-makeobject.npnormcvm = function(v, mu0 = 0, pi0 = 0, beta = 1){
-  if (class(v) == "npnormcvm"){
+makeobject.npnormcvmw = function(v, mu0 = 0, pi0 = 0, beta = 1, order = -4){
+  if (class(v) == "npnormcvmw"){
     # update information
     x = v
     x$mu0 = mu0; x$pi0 = pi0; x$sd = beta
-    x$precompute = seq(from = 0.5 / length(x$v), to = 1 - 0.5 / length(x$v), length = length(x$v)) -
-      pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = beta)
+    x$precompute = cumsum(x$w) / sum(x$w) - 0.5 / sum(x$w) -
+      pnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = beta, h = x$h)
   }
 
   if (is.numeric(v)){
-    v = sort(v, decreasing = FALSE)
-    x = list(v = v, mu0 = mu0, pi0 = pi0, sd = beta,
-             precompute = seq(from = 0.5 / length(v), to = 1 - 0.5 / length(v), length = length(v)) -
-               pnpnorm(v, mu0 = mu0, pi0 = pi0, sd = beta))
-    attr(x, "class") = "npnormcvm"
+    bindata = bin(v, order = order)
+    x = list(v = bindata$v, w = bindata$w, mu0 = mu0, pi0 = pi0, sd = beta, h = 10^order,
+             precompute = cumsum(bindata$w) / sum(bindata$w) - 0.5 / sum(bindata$w) -
+               pnpdiscnorm(bindata$v, mu0 = mu0, pi0 = pi0, sd = beta, h = 10^order))
+    attr(x, "class") = "npnormcvmw"
   }
 
   x
 }
 
-lossfunction.npnormcvm = function(x, mu0, pi0){
-  sum((pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd) - x$precompute)^2)
+lossfunction.npnormcvmw = function(x, mu0, pi0){
+  sum((pnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd, h = x$h) - x$precompute)^2 * x$w)
 }
 
-gradientfunction.npnormcvm = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
-  flexden = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd)
+gradientfunction.npnormcvmw = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
+  flexden = pnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$sd, h = x$h)
   fullden = flexden - x$precompute
   ans = vector("list", 3)
   names(ans) = c("d0", "d1", "d2")
   if (order[1] == 1){
-    temp = pnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$sd) * sum(pi0)
-    ans$d0 = .colSums((temp - flexden) * fullden, m = length(x$v), n = length(mu))
+    temp = pdiscnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$sd, h = x$h) * sum(pi0)
+    ans$d0 = .colSums((temp - flexden) * fullden * x$w, m = length(x$v), n = length(mu))
   }
   if (any(order[2:3] == 1)){
-    temp = dnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$sd) * sum(pi0)
+    temp = dnorm(x$v + x$h, rep(mu, rep(length(x$v), length(mu))), sd = x$sd) * fullden * x$w
   }
   if (order[2] == 1){
-    ans$d1 = .colSums(temp * fullden, m = length(x$v), n = length(mu)) * -2
+    ans$d1 = .colSums(temp, m = length(x$v), n = length(mu)) * -2 * sum(pi0)
   }
   if (order[3] == 1){
-    xminusmu = x$v - rep(mu, rep(length(x$v), length(mu)))
-    ans$d2 = .colSums(temp * xminusmu * fullden, m = length(x$v), n = length(mu)) * -2
+    xminusmu = x$v + x$h - rep(mu, rep(length(x$v), length(mu)))
+    ans$d2 = .colSums(temp * xminusmu, m = length(x$v), n = length(mu)) * -2 * sum(pi0)
   }
 
   ans
 }
 
 #' @export
-computemixdist.npnormcvm = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
+computemixdist.npnormcvmw = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   if (is.null(mix)){
     rx = range(x$v)
     breaks = pmax(ceiling(diff(rx) / (5 * x$sd)), 5)   # number of breaks
-    r = whist(x$v, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
+    r = whist(x$v, x$w, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
     r$density = pmax(0, r$density - pnpnorm(r$breaks[-1], mu0 = x$mu0, pi0 = x$pi0, sd = x$sd) +
                        pnpnorm(r$breaks[-length(r$breaks)], mu0 = x$mu0, pi0 = x$pi0, sd = x$sd))
     mu0 = r$mids[r$density != 0]
@@ -69,9 +69,9 @@ computemixdist.npnormcvm = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ve
 
   repeat{
     mu0new = c(mu0, solvegradientmultiple(x, mu0, pi0, points, tol))
-    S = pnorm(x$v, mean = rep(mu0new, rep(length(x$v), length(mu0new))), sd = x$sd)
+    S = pdiscnorm(x$v, mean = rep(mu0new, rep(length(x$v), length(mu0new))), sd = x$sd, h = x$h)
     dim(S) = c(length(x$v), length(mu0new))
-    pi0new = pnnls(S, x$precompute, sum = 1 - sum(x$pi0))$x
+    pi0new = pnnls(S * sqrt(x$w), x$precompute * sqrt(x$w), sum = 1 - sum(x$pi0))$x
     r = collapsemix(x, mu0new, pi0new, tol)
     mu0 = r$pt; pi0 = r$pr
     iter = iter + 1
@@ -105,6 +105,7 @@ computemixdist.npnormcvm = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ve
              mix = list(pt = r$pt, pr = r$pr),
              ll = nloss,
              dd0 = gradientfunction(x, 0, r$pt, r$pr, order = c(1, 0, 0))$d0,
+             h = x$h,
              convergence = convergence)
 
   attr(ans, "class") = "nspmix"
@@ -113,13 +114,14 @@ computemixdist.npnormcvm = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ve
 
 #' @rdname estpi0
 #' @export
-estpi0.npnormcvm = function(x, val = qCvM(0.05, lower.tail = FALSE), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
+estpi0.npnormcvmw = function(x, val = qCvM(0.05, lower.tail = FALSE), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   x = makeobject(x, mu0 = 0, pi0 = 1 - tol / 2, beta = x$sd, method = attr(x, "class"))
   r1 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
   x = makeobject(x, mu0 = 0, pi0 = 0, beta = x$sd, method = attr(x, "class"))
   r0 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
+  nval = sum(x$w) / 3 - sum(x$w * (cumsum(x$w) / sum(x$w) - 0.5 / sum(x$w))^2)
 
-  if (r1$ll + 1/ 12 / length(x$v) < val){
+  if (r1$ll + nval < val){
     r = list(iter = 0,
              family = "npnorm",
              max.gradient = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
@@ -128,8 +130,8 @@ estpi0.npnormcvm = function(x, val = qCvM(0.05, lower.tail = FALSE), mix = NULL,
              dd0 = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
              convergence = 0)
   }else{
-    r = solveestpi0(x = x, init = dnpnorm(0, mu0 = r0$mix$pt, pi0 = r0$mix$pr, sd = x$sd) * sqrt(2 * base::pi) * x$sd,
-                    val = 1/ 12 / length(x$v) - val, mix = r0$mix, tol = tol, maxiter = maxiter, verbose = verbose)
+    r = solveestpi0(x = x, init = dnpdiscnorm(0, mu0 = r0$mix$pt, pi0 = r0$mix$pr, sd = x$sd, h = x$h) / ddiscnorm(0, sd = x$sd, h = x$h),
+                    val = nval - val, mix = r0$mix, tol = tol, maxiter = maxiter, verbose = verbose)
   }
 
   r
