@@ -16,7 +16,7 @@ pnpt = function(x, mu0 = 0, pi0 = 0, df, lower.tail = TRUE, log.p = FALSE){
 
 gridpointsnpt = function(x, grid=100) {
   rx = range(x$v)
-  fac = ifelse(is.finite(x$beta), sqrt(x$beta / (x$beta - 2)), 1)
+  if (is.finite(x$beta) & x$beta >= 3) {fac = sqrt(x$beta / (x$beta - 2))} else fac = 1
   breaks = pmax(ceiling(diff(rx) / (5 * fac)), 5)   # number of breaks
   if (is.null(x$w)) {w = rep(1, length(x$v))} else {w = x$w}
   r = whist(x$v, w, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
@@ -58,7 +58,11 @@ lossfunction.nptll = function(x, mu0, pi0){
 }
 
 gradientfunction.nptll = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
-  flexden = dnpt(x$v, mu0 = mu0, pi0 = pi0, df = x$beta)
+  if (!is.null(x$flexden)){
+    flexden = x$flexden
+  }else{
+    flexden = dnpt(x$v, mu0 = mu0, pi0 = pi0, df = x$beta)
+  }
   temp = dt(x$v, ncp = rep(mu, rep(length(x$v), length(mu))), df = x$beta) * sum(pi0)
   fullden = flexden + x$precompute
   ans = vector("list", 3)
@@ -77,7 +81,7 @@ gradientfunction.nptll = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
 computemixdist.nptll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   if (is.null(mix)){
     rx = range(x$v)
-    fac = ifelse(is.finite(x$beta), sqrt(x$beta / (x$beta - 2)), 1)
+    if (is.finite(x$beta) & x$beta >= 3) {fac = sqrt(x$beta / (x$beta - 2))} else fac = 1
     breaks = pmax(ceiling(diff(rx) / (5 * fac)), 10)   # number of breaks
     r = whist(x$v, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
     r$density = pmax(0, r$density - pnpt(r$breaks[-1], mu0 = x$mu0, pi0 = x$pi0, df = x$beta) +
@@ -88,6 +92,7 @@ computemixdist.nptll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbos
     mu0 = mix$pt; pi0 = mix$pr
   }
 
+  x$fn = function(mu0, pi0) dnpt(x$v, mu0 = mu0, pi0 = pi0, df = x$beta)
   pi0 = pi0 * (1 - sum(x$pi0))
 
   iter = 0; convergence = 0

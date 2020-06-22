@@ -23,3 +23,21 @@ This is a S3 generic function for computing non-parametric mixing distribution
 \details{
 The full list of implemented family is in \code{\link{makeobject}}.
 }
+\examples{
+data = rnorm(500, c(0, 2))
+pi0 = 0.5
+x = makeobject(data, pi0 = pi0, method = "npnormll")
+computemixdist(x)
+x = makeobject(data, pi0 = pi0, method = "npnormllw")
+computemixdist(x)
+x = makeobject(data, pi0 = pi0, method = "npnormcvm")
+computemixdist(x)
+x = makeobject(data, pi0 = pi0, method = "npnormcvmw")
+computemixdist(x)
+x = makeobject(data, pi0 = pi0, method = "npnormad")
+computemixdist(x)
+x = makeobject(data, pi0 = pi0, method = "npnormadw")
+computemixdist(x)
+x = makeobject(data, pi0 = pi0, method = "nptll")
+computemixdist(x)
+}

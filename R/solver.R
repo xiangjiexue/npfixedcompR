@@ -139,6 +139,13 @@ solvegradientmultipled2 = function(x, mu0, pi0, points, tol = 1e-6){
 }
 
 solvegradientmultiple = function(x, mu0, pi0, points, tol = 1e-6, method = "auto"){
+  # Here mu0 and pi0 is always fixed. since R has a copying sematics, we can modify
+  # the x object so that it pre-computes flexden to save some time.
+  # the corresponding methods in gradidentfunction should have capacity for testing whether
+  # there is a precompute value
+  # whether to precompute fullden remain a mistery
+  if (!is.null(x$fn))
+    x$flexden = x$fn(mu0, pi0)
   switch(method,
          "auto" = {
           # minimal sample to test implementation

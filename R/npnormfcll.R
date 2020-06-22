@@ -27,7 +27,11 @@ lossfunction.npnormll = function(x, mu0, pi0){
 }
 
 gradientfunction.npnormll = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
-  flexden = dnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta)
+  if (!is.null(x$flexden)){
+    flexden = x$flexden
+  }else{
+    flexden = dnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta)
+  }
   temp = dnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$beta) * sum(pi0)
   fullden = flexden + x$precompute
   ans = vector("list", 3)
@@ -62,6 +66,8 @@ computemixdist.npnormll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
   }else{
     mu0 = mix$pt; pi0 = mix$pr
   }
+
+  x$fn = function(mu0, pi0) dnpnorm(x$v, mu0, pi0, x$beta)
 
   pi0 = pi0 * (1 - sum(x$pi0))
 

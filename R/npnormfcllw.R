@@ -7,7 +7,7 @@ makeobject.npnormllw = function(v, mu0, pi0, beta, order = -4){
     if (!missing(mu0)) x$mu0 = mu0
     if (!missing(pi0)) x$pi0 = pi0
     if (!missing(beta)) x$beta = beta
-    x$precompute = dnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = beta, h = x$h)
+    x$precompute = dnpdiscnorm(x$v, mu0 = x$mu0, pi0 = x$pi0, sd = x$beta, h = x$h)
   }
 
   if (is.numeric(v)){
@@ -28,7 +28,11 @@ lossfunction.npnormllw = function(x, mu0, pi0){
 }
 
 gradientfunction.npnormllw = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
-  flexden = dnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, h = x$h)
+  if (!is.null(x$flexden)){
+    flexden = x$flexden
+  }else{
+    flexden = dnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, h = x$h)
+  }
   fullden = flexden + x$precompute
   ans = vector("list", 3)
   names(ans) = c("d0", "d1", "d2")
@@ -63,6 +67,7 @@ computemixdist.npnormllw = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ve
     mu0 = mix$pt; pi0 = mix$pr
   }
 
+  x$fn = function(mu0, pi0) dnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, h = x$h)
   pi0 = pi0 * (1 - sum(x$pi0))
 
   iter = 0; convergence = 0

@@ -7,8 +7,8 @@ makeobject.npnormad = function(v, mu0, pi0, beta){
     if (!missing(mu0)) x$mu0 = mu0
     if (!missing(pi0)) x$pi0 = pi0
     if (!missing(beta)) x$beta = beta
-    x$precompute1 = pnpnorm(v$v, mu0 = mu0, pi0 = pi0, sd = beta)
-    x$precompute2 = pnpnorm(v$v, mu0 = mu0, pi0 = pi0, sd = beta, lower.tail = FALSE)
+    x$precompute1 = pnpnorm(v$v, mu0 = x$mu0, pi0 = x$pi0, sd = x$beta)
+    x$precompute2 = pnpnorm(v$v, mu0 = x$mu0, pi0 = x$pi0, sd = x$beta, lower.tail = FALSE)
   }
 
   if (is.numeric(v)){
@@ -33,8 +33,12 @@ lossfunction.npnormad = function(x, mu0, pi0){
 }
 
 gradientfunction.npnormad = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
-  flexden = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta)
-  flexden2 = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, lower.tail = FALSE)
+  if (!is.null(x$flexden)){
+    flexden = x$flexden$p1; flexden2 = x$flexden$p2
+  }else{
+    flexden = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta)
+    flexden2 = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, lower.tail = FALSE)
+  }
   fullden = flexden + x$precompute1
   fullden2 = flexden2 + x$precompute2
   ans = vector("list", 3)
@@ -72,6 +76,8 @@ computemixdist.npnormad = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
     mu0 = mix$pt; pi0 = mix$pr
   }
 
+  x$fn = function(mu0, pi0) list(p1 = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta),
+                                 p2 = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, lower.tail = FALSE))
   pi0 = pi0 * (1 - sum(x$pi0))
 
   iter = 0; convergence = 0

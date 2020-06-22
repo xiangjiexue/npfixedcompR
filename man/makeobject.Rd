@@ -13,7 +13,7 @@
 \alias{makeobject.nptll}
 \title{Making object for computation}
 \usage{
-makeobject(v, mu0 = 0, pi0 = 0, beta = 1, method = "npnormll", ...)
+makeobject(v, method = "npnormll", ...)
 
 makeobject.npnormad(v, mu0, pi0, beta)
 
@@ -32,15 +32,15 @@ makeobject.nptll(v, mu0, pi0, beta)
 \arguments{
 \item{v}{the object either numeric or the implmented family}
 
+\item{method}{An implemented family; see details}
+
+\item{...}{other parameter passed to the constructor.}
+
 \item{mu0}{A vector of support points}
 
 \item{pi0}{A vector of weights corresponding to the support points}
 
 \item{beta}{structual parameter.}
-
-\item{method}{An implemented family; see details}
-
-\item{...}{other parameter passed to the constructor.}
 
 \item{order}{the parameter for the binned version.}
 }

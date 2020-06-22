@@ -46,9 +46,9 @@ NULL
 #' @param ... other parameter passed to the constructor.
 #' @rdname makeobject
 #' @export
-makeobject = function(v, mu0 = 0, pi0 = 0, beta = 1, method = "npnormll", ...){
+makeobject = function(v, method = "npnormll", ...){
   f = match.fun(paste0("makeobject.", method))
-  f(v = v, mu0 = mu0, pi0 = pi0, beta = beta, ...)
+  f(v = v, ...)
 }
 
 #' The loss functions for computing loss.
@@ -104,6 +104,23 @@ gradientfunction = function(x, mu, mu0, pi0, order){
 #' @param tol tolerance to stop the code
 #' @param maxiter maximum iteration to stop the code
 #' @param verbose logical. If TRUE, the intermediate results will be printed.
+#' @examples
+#' data = rnorm(500, c(0, 2))
+#' pi0 = 0.5
+#' x = makeobject(data, pi0 = pi0, method = "npnormll")
+#' computemixdist(x)
+#' x = makeobject(data, pi0 = pi0, method = "npnormllw")
+#' computemixdist(x)
+#' x = makeobject(data, pi0 = pi0, method = "npnormcvm")
+#' computemixdist(x)
+#' x = makeobject(data, pi0 = pi0, method = "npnormcvmw")
+#' computemixdist(x)
+#' x = makeobject(data, pi0 = pi0, method = "npnormad")
+#' computemixdist(x)
+#' x = makeobject(data, pi0 = pi0, method = "npnormadw")
+#' computemixdist(x)
+#' x = makeobject(data, pi0 = pi0, method = "nptll")
+#' computemixdist(x)
 #' @export
 computemixdist = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   UseMethod("computemixdist")
@@ -124,6 +141,23 @@ computemixdist = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FA
 #' @param tol tolerance to stop the code
 #' @param maxiter maximum iteration to stop the code
 #' @param verbose logical. If TRUE, the intermediate results will be printed.
+#' @examples
+#' data = rnorm(500, c(0, 2))
+#' pi0 = 0.5
+#' x = makeobject(data, method = "npnormll")
+#' estpi0(x)
+#' x = makeobject(data, method = "npnormllw")
+#' estpi0(x)
+#' x = makeobject(data, method = "npnormcvm")
+#' estpi0(x)
+#' x = makeobject(data, method = "npnormcvmw")
+#' estpi0(x)
+#' x = makeobject(data, method = "npnormad")
+#' estpi0(x)
+#' x = makeobject(data, method = "npnormadw")
+#' estpi0(x)
+#' x = makeobject(data, method = "nptll")
+#' estpi0(x)
 #' @export
 estpi0 = function(x, val, mix, tol, maxiter, verbose){
   UseMethod("estpi0")

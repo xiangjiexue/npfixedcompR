@@ -101,3 +101,21 @@ have different threshold values.
 
 The full list of implemented family is in \code{\link{makeobject}}.
 }
+\examples{
+data = rnorm(500, c(0, 2))
+pi0 = 0.5
+x = makeobject(data, method = "npnormll")
+estpi0(x)
+x = makeobject(data, method = "npnormllw")
+estpi0(x)
+x = makeobject(data, method = "npnormcvm")
+estpi0(x)
+x = makeobject(data, method = "npnormcvmw")
+estpi0(x)
+x = makeobject(data, method = "npnormad")
+estpi0(x)
+x = makeobject(data, method = "npnormadw")
+estpi0(x)
+x = makeobject(data, method = "nptll")
+estpi0(x)
+}
