@@ -42,40 +42,29 @@ solvegradientmultipled0 = function(x, mu0, pi0, points, tol = 1e-6){
 }
 
 solvegradientsingled2 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v), tol = 1e-6){
-  neg = lower; pos = upper; init = mean(c(neg, pos))
-  negval = NA; posval = NA
+  # This implements the vectorised version
+  neg = lower; pos = upper; init = (neg + pos) / 2
+  negval = rep(NA, length(lower)); posval = rep(NA, length(upper))
   r = gradientfunction(x, init, mu0, pi0, order = c(0, 1, 1))
   d1 = r$d1
   d2 = r$d2
   repeat{
-    if (abs(d1) < tol | pos - neg < tol)
+    if (all(abs(d1) < tol | pos - neg < tol))
       break
-    if (d1 < 0){
-      neg = max(neg, init)
-      negval = max(negval, d1, na.rm = TRUE)
-    }else{
-      pos = min(pos, init)
-      posval = min(posval, d1, na.rm = TRUE)
-    }
+    j0 = d1 < 0
+    neg[j0] = pmax(neg[j0], init[j0])
+    negval[j0] = pmax(negval[j0], d1[j0], na.rm = TRUE)
+    pos[!j0] = pmin(pos[!j0], init[!j0])
+    posval[!j0] = pmin(posval[!j0], d1[!j0], na.rm = TRUE)
 
     init = init - d1 / d2
 
-    if ((init - neg) < 0.1 * (pos - neg) | init < neg){
-      if (!is.na(negval) & !is.na(posval)){
-        init = (1 + negval / (posval - negval)) * neg + (1 - posval / (posval - negval)) * pos
-      }else{
-        init = (pos - neg) * 0.1 + neg
-      }
-
-    }
-
-    if ((init - neg) > 0.9 * (pos - neg) | init > pos){
-      if (!is.na(negval) & !is.na(posval)){
-        init = (1 + negval / (posval - negval)) * neg + (1 - posval / (posval - negval)) * pos
-      }else{
-        init = (pos - neg) * 0.9 + neg
-      }
-    }
+    j0 = (init - neg) < 0.1 * (pos - neg) | init < neg
+    j = !is.na(negval) & !is.na(posval)
+    init[j] = (1 + negval[j] / (posval[j] - negval[j])) * neg[j] + (1 - posval[j] / (posval[j] - negval[j])) * pos[j]
+    init[j0 & !j] = (pos[j0 & !j] - neg[j0 & !j]) * 0.1 + neg[j0 & !j]
+    j0 = (init - neg) > 0.9 * (pos - neg) | init > pos
+    init[j0 & !j] = (pos[j0 & !j] - neg[j0 & !j]) * 0.9 + neg[j0 & !j]
 
     r = gradientfunction(x, init, mu0, pi0, order = c(0, 1, 1))
     d1 = r$d1
@@ -89,13 +78,10 @@ solvegradientmultipled2 = function(x, mu0, pi0, points, tol = 1e-6){
   pointsval = gradientfunction(x = x, mu = points, mu0 = mu0, pi0 = pi0, order = c(0, 1, 0))$d1
   index = seq(1, by = 1, length = length(points) - 1)[pointsval[-length(pointsval)] < 0 & pointsval[-1] > 0]
   if (length(index) >= 1){
-    r = sapply(index, function(ddd){
-      solvegradientsingled2(x = x, mu0 = mu0, pi0 = pi0, lower = points[ddd], upper = points[ddd + 1], tol)
-    })
-    r = c(min(x$v), r, max(x$v))
+    r = c(points[1], solvegradientsingled2(x = x, mu0 = mu0, pi0 = pi0, lower = points[index], upper = points[index + 1], tol), points[length(points)])
     r = r[gradientfunction(x = x, mu = r, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
   }else{
-    r = range(x$v)[gradientfunction(x = x, mu = range(x$v), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
+    r = c(points[1], points[length(points)])[gradientfunction(x = x, mu = c(points[1], points[length(points)]), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
   }
   r
 }

@@ -1,13 +1,13 @@
 Package: npfixedcompR
 Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Version: 0.0.0.9001
 Authors@R: 
     person(given = "Xiangjie",
            family = "Xue",
            role = c("aut", "cre"),
            email = "x.xue@auckland.ac.nz")
 Description: What the package does (one paragraph).
-Imports: lsei, goftest, nloptr
+Imports: lsei (>= 1.2-0), goftest (>= 1.2-2), nloptr (>= 1.2.2.1)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
