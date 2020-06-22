@@ -1,18 +1,70 @@
 # In this case can f be a function with solving mu of order = c(0, 1, 0)
 solvegradientsingled1 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v), tol = 1e-6){
-  uniroot(function(mu_){
-    gradientfunction(x = x, mu = mu_, mu0 = mu0, pi0 = pi0, order = c(0, 1, 0))$d1
-  }, lower = lower, upper = upper, tol = tol)$root
+  # vectorised implementation
+  a = lower; b = upper
+  f1 = gradientfunction(x = x, mu = c(a, b), mu0 = mu0, pi0 = pi0, order = c(0, 1, 0))$d1
+  fa = f1[1:length(a)]; fb = f1[(length(a) + 1) : length(f1)]
+  j0 = abs(fa) < abs(fb)
+  # swap a, b
+  temp = a[j0]; a[j0] = b[j0]; b[j0] = temp
+  temp = fa[j0]; fa[j0] = fb[j0]; fb[j0] = temp
+  c = a; fc = fa
+  s = numeric(length(a))
+  c1 = numeric(length(a))
+  d = numeric(length(a))
+  # set the mflag (mflag = TRUE)
+  mflag = rep(TRUE, length(a))
+  repeat{
+    if (all(abs(fb) < tol | abs(fc) < tol | abs(b - a) < tol))
+      break
+    j0 = fa != fc & fb != fc
+    s[j0] = a[j0] * fb[j0] * fc[j0] / (fa[j0] - fb[j0]) / (fa[j0] - fc[j0]) +
+      b[j0] * fa[j0] * fc[j0] / (fb[j0] - fa[j0]) / (fb[j0] - fc[j0]) +
+      c[j0] * fa[j0] * fb[j0] / (fc[j0] - fa[j0]) / (fc[j0] - fb[j0])
+    s[!j0] = b[!j0] - fb[!j0] * (b[!j0] - a[!j0]) / (fb[!j0] - fa[!j0])
+
+    # condition 1
+    j0 = a < b
+    c1[j0] = s[j0] > (3 * a[j0] + b[j0]) / 4 & s[j0] < b[j0]
+    c1[!j0] = s[!j0] < (3 * a[!j0] + b[!j0]) / 4 & s[!j0] > b[!j0]
+    # condition 2
+    c2 = mflag & abs(s - b) > abs(b - c) / 2
+    # condition 3
+    c3 = !mflag & abs(s - b) >= abs(c - d) / 2
+    # condition 4
+    c4 = mflag & abs(b - c) < tol
+    # condition 5
+    c5 = !mflag & abs(c - d) < tol
+
+    s[c1 | c2 | c3 | c4 | c5] = (a[c1 | c2 | c3 | c4 | c5] + b[c1 | c2 | c3 | c4 | c5]) / 2
+    mflag[c1 | c2 | c3 | c4 | c5] = TRUE
+    mflag[!(c1 | c2 | c3 | c4 | c5)] = FALSE
+
+    fs = gradientfunction(x, s, mu0, pi0, order = c(0, 1, 0))$d1
+    d = c; c = b
+
+    j0 = fa * fs < 0
+    b[j0] = s[j0]; fb[j0] = s[j0]
+    a[!j0] = s[!j0]; fa[!j0] = s[!j0]
+
+    j0 = abs(fa) < abs(fb)
+    # swap a, b
+    temp = a[j0]; a[j0] = b[j0]; b[j0] = temp
+    temp = fa[j0]; fa[j0] = fb[j0]; fb[j0] = temp
+  }
+
+  b
 }
+
 
 solvegradientmultipled1 = function(x, mu0, pi0, points, tol = 1e-6){
   pointsval = gradientfunction(x = x, mu = points, mu0 = mu0, pi0 = pi0, order = c(0, 1, 0))$d1
   index = seq(1, by = 1, length = length(points) - 1)[pointsval[-length(pointsval)] < 0 & pointsval[-1] > 0]
   if (length(index) >= 1){
-    r = sapply(index, function(ddd){
-      solvegradientsingled1(x = x, mu0 = mu0, pi0 = pi0, lower = points[ddd], upper = points[ddd + 1], tol)
-    })
-    r = c(min(x$v), r, max(x$v))
+    # r = sapply(index, function(ddd){
+    #   solvegradientsingled1(x = x, mu0 = mu0, pi0 = pi0, lower = points[ddd], upper = points[ddd + 1], tol)
+    # })
+    r = c(min(x$v), solvegradientsingled1(x = x, mu0 = mu0, pi0 = pi0, lower = points[index], upper = points[index + 1], tol), max(x$v))
     r = r[gradientfunction(x = x, mu = r, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
   }else{
     r = range(x$v)[gradientfunction(x = x, mu = range(x$v), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]

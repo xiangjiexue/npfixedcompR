@@ -70,7 +70,7 @@ computemixdist.npnormll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
   points = gridpointsnpnorm(x)
 
   repeat{
-    mu0new = c(mu0, solvegradientmultiple(x, mu0, pi0, points, tol, method = "d2"))
+    mu0new = c(mu0, solvegradientmultiple(x, mu0, pi0, points, tol, method = "d1"))
     pi0new = c(pi0, rep(0, length.out = length(mu0new) - length(mu0)))
     sp = dnorm(x$v, mean = rep(mu0new, rep(length(x$v), length(mu0new))), sd = x$beta)
     fp = .rowSums(sp[1:(length(x$v) * length(mu0))] * rep(pi0, rep(length(x$v), length(pi0))), m = length(x$v), n = length(pi0)) + x$precompute
