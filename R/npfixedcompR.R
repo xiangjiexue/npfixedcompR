@@ -163,6 +163,31 @@ estpi0 = function(x, val, mix, tol, maxiter, verbose){
   UseMethod("estpi0")
 }
 
+#' Find the rejection region
+#'
+#' Find the rejection region based on the family in the result
+#' The rejection region is calculated using the density estimate rather than data points hence robust.
+#' The rejection is based on the hypothesis is located at 0.
+#' The optimisation is done via NLopt library (The package nloptr)
+#'
+#' @title Find the rejection region
+#' @param result an object class nspmix
+#' @param alpha the FDR controlling rate.
+#' @examples
+#' data = rnorm(500, c(0, 2))
+#' x = makeobject(data, pi0 = 0.5)
+#' r1 = computemixdist(x)
+#' rejectregion(r1)
+#' x2 = makeobject(data, pi0 = 0.5, method = "nptll") # equivalent to normal
+#' r2 = computemixdist(x2)
+#' rejectregion(r2)
+#' @return a list with par is the boundary for rejection and area is the propotion of rejection
+#' @export
+rejectregion = function(result, alpha = 0.05){
+  f = match.fun(paste0("rejectregion.", result$family))
+  f(result = result, alpha = alpha)
+}
+
 # Taken from nspmix with modification
 # For simplifying the mixing distribution
 unique.disc = function(pt, pr, prec=0) {
