@@ -84,7 +84,7 @@ computemixdist.npnormll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
     dim(S) = c(length(x$v), length(pi0new))
     a = 2 - x$precompute / fp
     newweight = pnnls(S, a, sum = 1 - sum(x$pi0))$x
-    r = checklossfunction(x, mu0new, pi0new, newweight - pi0new, colSums(S) / (1 - sum(x$pi0)))
+    r = checklossfunction(x, mu0new, pi0new, newweight - pi0new, colSums(S))
     r = collapsemix(x, r$pt, r$pr, tol)
     mu0 = r$pt; pi0 = r$pr
     iter = iter + 1
