@@ -27,3 +27,161 @@ returnlower = function(v){
   ans[lower.tri(ans)] = v
   ans + t(ans) + diag(LLL)
 }
+
+#' Find the rejection region
+#'
+#' Find the rejection region based on the family in the result
+#' The rejection region is calculated using the density estimate rather than data points hence robust.
+#' The rejection is based on the hypothesis is located at 0.
+#' The optimisation is done via NLopt library (The package nloptr)
+#'
+#' @title Find the rejection region
+#' @param result an object class nspmix
+#' @param alpha the FDR controlling rate.
+#' @examples
+#' data = rnorm(500, c(0, 2))
+#' x = makeobject(data, pi0 = 0.5)
+#' r1 = computemixdist(x)
+#' rejectregion(r1)
+#' x2 = makeobject(data, pi0 = 0.5, method = "nptll") # equivalent to normal
+#' r2 = computemixdist(x2)
+#' rejectregion(r2)
+#' @return a list with par is the boundary for rejection and area is the propotion of rejection
+#' @export
+rejectregion = function(result, alpha = 0.05){
+  f = match.fun(paste0("rejectregion.", result$family))
+  f(result = result, alpha = alpha)
+}
+
+#' Find the posterior mean given the observations and the mixing
+#' distribution based on the family in the result
+#'
+#' @title Find the posterior mean
+#' @param x a vector of observations
+#' @param result an object of class nspmix
+#' @param fun the function to transform the mean. It finds the posterior mean
+#' of \code{fun(x)}. The function \code{fun} must be vectorised.
+#' @examples
+#' data = rnorm(500, c(0, 2))
+#' x = makeobject(data, pi0 = 0.5)
+#' r1 = computemixdist(x)
+#' posteriormean(data, r1)
+#' x2 = makeobject(data, pi0 = 0.5, method = "nptll") # equivalent to normal
+#' r2 = computemixdist(x2)
+#' posteriormean(data, r2, fun = function(x) x^2)
+#' @export
+posteriormean = function(x, result, fun = function(x) x){
+  f = match.fun(paste0("posteriormean.", result$family))
+  f(x = x, result = result, fun = fun)
+}
+
+#' @rdname posteriormean
+#' @export
+posteriormean.npnorm = function(x, result, fun = function(x) x){
+  temp = dnorm(x, mean = rep(result$mix$pt, rep(length(x), length(result$mix$pt))), sd = result$beta) *
+    rep(result$mix$pr, rep(length(x), length(result$mix$pr)))
+  .rowSums(temp * rep(fun(result$mix$pt), rep(length(x), length(result$mix$pt))),
+           m = length(x), n = length(result$mix$pt)) /
+    .rowSums(temp, m = length(x), n = length(result$mix$pt))
+}
+
+#' @rdname posteriormean
+#' @export
+posteriormean.npt = function(x, result, fun = function(x) x){
+  temp = dt(x, ncp = rep(result$mix$pt, rep(length(x), length(result$mix$pt))), df = result$beta) *
+    rep(result$mix$pr, rep(length(x), length(result$mix$pr)))
+  .rowSums(temp * rep(fun(result$mix$pt), rep(length(x), length(result$mix$pt))),
+           m = length(x), n = length(result$mix$pt)) /
+    .rowSums(temp, m = length(x), n = length(result$mix$pt))
+}
+
+#' Estimating covariance matrix using Empirical Bayes
+#'
+#' @title Estimating Covariance Matrix using Empirical Bayes
+#' @param X a matrix of size n * p, where n is the number of observations and p is the number of variables
+#' @param estpi0 logical; if TRUE, the NPMLE is estimated based on the estimation of pi0, which in this case
+#' can be used to detect sparsity or assume sparsity.
+#' @param order the level of binning to use when the number of observations passed to the computation is greater
+#' than 5000.
+#' @param verbose logical; If TRUE, the intermediate results will be shown.
+#' @return a covariance matrix estimate of size p * p.
+#' @examples
+#' n = 100; p = 50
+#' X = matrix(rnorm(n * p), nrow = n, ncol = p)
+#' r = covestEB(X)
+#' @export
+covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
+  p = dim(X)[2]
+  n = dim(X)[1]
+  covest = cov(X)
+  fisherdata = atanh(extractlower(cov2cor(covest)))
+  index = abs(fisherdata) > 3
+  if (estpi0){
+    if (length(fisherdata[!index]) > 5000){
+      x = makeobject(fisherdata[!index], method = "npnormllw", order = order, beta = sqrt(1 / (n - 3)))
+      r = estpi0(x, verbose = verbose)
+    }else{
+      x = makeobject(fisherdata[!index], beta = sqrt(1 / (n - 3)))
+      r = estpi0(x, verbose = verbose)
+    }
+  }else{
+    if (length(fisherdata[!index]) > 5000){
+      x = makeobject(fisherdata[!index], method = "npnormllw", order = order, beta = sqrt(1 / (n - 3)))
+      r = computemixdist(x, verbose = verbose)
+    }else{
+      x = makeobject(fisherdata[!index], beta = sqrt(1 / (n - 3)))
+      r = computemixdist(x, verbose = verbose)
+    }
+  }
+
+  postmean = posteriormean(fisherdata[!index], r, fun = tanh)
+
+  ans = numeric(length(fisherdata))
+  ans[!index] = postmean
+  ans[index] = tanh(fisherdata[index])
+
+  ans = returnlower(ans)
+
+  ans = CorrelationMatrix(ans, b = rep(1, p), tol = 1e-3)$CorrMat
+
+  varest = sqrt(diag(covest))
+
+  ans * varest * rep(varest, rep(length(varest), length(varest)))
+}
+
+#' plot the mapping between the original observations and its posterior mean
+#'
+#' @title plot the posterier map
+#' @param x a vector of observations
+#' @param result an object of class nspmix
+#' @param ... other parameter passed to \code{plot}
+#' @return none
+#' @examples
+#' n = 100; p = 50
+#' X = matrix(rnorm(n * p), nrow = n, ncol = p)
+#' r = covestEB(X)
+#' x = makeobject(extractlower(r))
+#' r1 = computemixdist(x)
+#' plotposteriormapping(extractlower(r), r1)
+#' @export
+plotposteriormapping = function(x, result, ...){
+  values = 0;
+  plot(values, 0, xlim = range(x), ylim = c(0, 1), type = "n", ylab = "", yaxt = "n", ...)
+  ordered.x = sort(x)
+  postmean = posteriormean(ordered.x, result)
+  cols = rainbow(length(ordered.x), end = 0.85)
+  sapply(1:length(ordered.x), function(ddd){
+    points(ordered.x[ddd], 1, col = cols[ddd], pch = 16)
+    points(postmean[ddd], 0.1, col = cols[ddd], pch = 16)
+    lines(c(ordered.x[ddd], postmean[ddd]), c(1, 0.1), col = cols[ddd])
+  })
+  points(result$mix$pt, rep(0, length(result$mix$pt)))
+  sapply(1:length(result$mix$pr), function(ddd){
+    lines(rep(result$mix$pt[ddd], 2), c(0, result$mix$pr[ddd] * 0.05), lwd = 3)
+  })
+  d = seq(min(x), to = max(x), length = 1000)
+  dens = dnpnorm(d, mu0 = result$mix$pt, pi0 = result$mix$pr, sd = result$beta)
+  lines(d, dens / max(dens) * 0.06 , col = "red", lwd = 2)
+  abline(h = 0, lwd = 0.5)
+  NULL
+}
