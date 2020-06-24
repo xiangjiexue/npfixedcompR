@@ -9,14 +9,20 @@ solvegradientsingled1 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
   temp = a[j0]; a[j0] = b[j0]; b[j0] = temp
   temp = fa[j0]; fa[j0] = fb[j0]; fb[j0] = temp
   c = a; fc = fa
-  s = numeric(length(a))
+  s = numeric(length(a)); fs = numeric(length(a))
   c1 = numeric(length(a))
   d = numeric(length(a))
   # set the mflag (mflag = TRUE)
   mflag = rep(TRUE, length(a))
+  index = rep(FALSE, length(a))
   repeat{
-    if (all(abs(fb) < tol | abs(fc) < tol | abs(b - a) < tol))
+    if (sum(index) == length(a))
       break
+
+    index = abs(fb) < tol | abs(fc) < tol | abs(b - a) < tol
+
+    # does not matter how the following changes for a[index], b[index], etc. changes, not referenced as long as
+    # s is not assigned to a or b
     j0 = fa != fc & fb != fc
     s[j0] = a[j0] * fb[j0] * fc[j0] / (fa[j0] - fb[j0]) / (fa[j0] - fc[j0]) +
       b[j0] * fa[j0] * fc[j0] / (fb[j0] - fa[j0]) / (fb[j0] - fc[j0]) +
@@ -36,16 +42,18 @@ solvegradientsingled1 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
     # condition 5
     c5 = !mflag & abs(c - d) < tol
 
-    s[c1 | c2 | c3 | c4 | c5] = (a[c1 | c2 | c3 | c4 | c5] + b[c1 | c2 | c3 | c4 | c5]) / 2
-    mflag[c1 | c2 | c3 | c4 | c5] = TRUE
-    mflag[!(c1 | c2 | c3 | c4 | c5)] = FALSE
+    cond = c1 | c2 | c3 | c4 | c5
 
-    fs = gradientfunction(x, s, mu0, pi0, order = c(0, 1, 0))$d1
+    s[cond] = (a[cond] + b[cond]) / 2
+    mflag[cond] = TRUE
+    mflag[!cond] = FALSE
+
+    fs[!index] = gradientfunction(x, s[!index], mu0, pi0, order = c(0, 1, 0))$d1
     d = c; c = b
 
     j0 = fa * fs < 0
-    b[j0] = s[j0]; fb[j0] = s[j0]
-    a[!j0] = s[!j0]; fa[!j0] = s[!j0]
+    b[j0 & !index] = s[j0 & !index]; fb[j0 & !index] = s[j0 & !index]
+    a[!j0 & !index] = s[!j0 & !index]; fa[!j0 & !index] = s[!j0 & !index]
 
     j0 = abs(fa) < abs(fb)
     # swap a, b
@@ -64,10 +72,10 @@ solvegradientmultipled1 = function(x, mu0, pi0, points, tol = 1e-6){
     # r = sapply(index, function(ddd){
     #   solvegradientsingled1(x = x, mu0 = mu0, pi0 = pi0, lower = points[ddd], upper = points[ddd + 1], tol)
     # })
-    r = c(min(x$v), solvegradientsingled1(x = x, mu0 = mu0, pi0 = pi0, lower = points[index], upper = points[index + 1], tol), max(x$v))
+    r = c(points[1], solvegradientsingled1(x = x, mu0 = mu0, pi0 = pi0, lower = points[index], upper = points[index + 1], tol), points[length(points)])
     r = r[gradientfunction(x = x, mu = r, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
   }else{
-    r = range(x$v)[gradientfunction(x = x, mu = range(x$v), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
+    r = c(points[1], points[length(points)])[gradientfunction(x = x, mu = c(points[1], points[length(points)]), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
   }
   r
 }
@@ -85,10 +93,10 @@ solvegradientmultipled0 = function(x, mu0, pi0, points, tol = 1e-6){
     r = sapply(index, function(ddd){
       solvegradientsingled0(x = x, mu0 = mu0, pi0 = pi0, lower = points[ddd], upper = points[ddd + 1], tol)
     })
-    r = c(min(x$v), r, max(x$v))
+    r = c(points[1], r, points[length(points)])
     r = r[gradientfunction(x = x, mu = r, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
   }else{
-    r = range(x$v)[gradientfunction(x = x, mu = range(x$v), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
+    r = c(points[1], points[length(points)])[gradientfunction(x = x, mu = c(points[1], points[length(points)]), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
   }
   r
 }
