@@ -104,31 +104,30 @@ solvegradientmultipled0 = function(x, mu0, pi0, points, tol = 1e-6){
 solvegradientsingled2 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v), tol = 1e-6){
   # This implements the vectorised version
   neg = lower; pos = upper; init = (neg + pos) / 2
-  negval = rep(NA, length(lower)); posval = rep(NA, length(upper))
   r = gradientfunction(x, init, mu0, pi0, order = c(0, 1, 1))
   d1 = r$d1
   d2 = r$d2
+
+  index = rep(FALSE, length(neg))
   repeat{
-    if (all(abs(d1) < tol | pos - neg < tol))
+    if (sum(index) == length(neg))
       break
+    index = abs(d1) < tol | pos - neg < tol
+
     j0 = d1 < 0
     neg[j0] = pmax(neg[j0], init[j0])
-    negval[j0] = pmax(negval[j0], d1[j0], na.rm = TRUE)
     pos[!j0] = pmin(pos[!j0], init[!j0])
-    posval[!j0] = pmin(posval[!j0], d1[!j0], na.rm = TRUE)
 
-    init = init - d1 / d2
+    init[!index] = init[!index] - d1[!index] / d2[!index]
 
-    j0 = (init - neg) < 0.1 * (pos - neg) | init < neg
-    j = !is.na(negval) & !is.na(posval)
-    init[j] = (1 + negval[j] / (posval[j] - negval[j])) * neg[j] + (1 - posval[j] / (posval[j] - negval[j])) * pos[j]
-    init[j0 & !j] = (pos[j0 & !j] - neg[j0 & !j]) * 0.1 + neg[j0 & !j]
-    j0 = (init - neg) > 0.9 * (pos - neg) | init > pos
-    init[j0 & !j] = (pos[j0 & !j] - neg[j0 & !j]) * 0.9 + neg[j0 & !j]
+    j0 = ((init - neg) < 0.1 * (pos - neg) | init < neg) & !index
+    init[j0] = (pos[j0] - neg[j0]) * 0.1 + neg[j0]
+    j0 = ((init - neg) > 0.9 * (pos - neg) | init > pos) & !index
+    init[j0] = (pos[j0] - neg[j0]) * 0.9 + neg[j0]
 
-    r = gradientfunction(x, init, mu0, pi0, order = c(0, 1, 1))
-    d1 = r$d1
-    d2 = r$d2
+    r = gradientfunction(x, init[!index], mu0, pi0, order = c(0, 1, 1))
+    d1[!index] = r$d1
+    d2[!index] = r$d2
   }
 
   init

@@ -39,24 +39,25 @@ gradientfunction.npnormadw = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
     flexden = pnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, h = x$h)
     flexden2 = pnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, lower.tail = FALSE, h = x$h)
   }
+  murep = rep(mu, rep(length(x$v), length(mu)))
   fullden = flexden + x$precompute1
   fullden2 = flexden2 + x$precompute2
   ans = vector("list", 3)
   names(ans) = c("d0", "d1", "d2")
   if (order[1] == 1){
     addconst = -sum(x$precompute1 * x$a1 / fullden + x$precompute2 * x$a2 / fullden2) + 2 * sum(x$w)
-    ans$d0 = .colSums(pdiscnorm(x$v, rep(mu, rep(length(x$v), length(mu))), sd = x$beta, h = x$h) * x$a1 / fullden +
-                        pdiscnorm(x$v, rep(mu, rep(length(x$v), length(mu))), sd = x$beta, lower.tail = FALSE, h = x$h) * x$a2 / fullden2,
+    ans$d0 = .colSums(pdiscnorm(x$v, murep, sd = x$beta, h = x$h) * x$a1 / fullden +
+                        pdiscnorm(x$v, murep, sd = x$beta, lower.tail = FALSE, h = x$h) * x$a2 / fullden2,
                       m = length(x$v), n = length(mu)) * -sum(pi0) + addconst
   }
+  if (any(order[2:3] == 1)){
+    temp = dnorm(x$v + x$h, mean = murep, sd = x$beta) * (x$a1 / fullden - x$a2 / fullden2)
+  }
   if (order[2] == 1){
-    ans$d1 = .colSums(dnorm(x$v + x$h, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$beta) *
-                        (x$a1 / fullden - x$a2 / fullden2), m = length(x$v), n = length(mu)) * sum(pi0)
+    ans$d1 = .colSums(temp, m = length(x$v), n = length(mu)) * sum(pi0)
   }
   if (order[3] == 1){
-    xminusmu = x$v + x$h - rep(mu, rep(length(x$v), length(mu)))
-    ans$d2 = .colSums(xminusmu * dnorm(x$v + x$h, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$beta) *
-                        (x$a1 / fullden - x$a2 / fullden2), m = length(x$v), n = length(mu)) * sum(pi0) / x$beta^2
+    ans$d2 = .colSums((x$v + x$h - murep) * temp, m = length(x$v), n = length(mu)) * sum(pi0) / x$beta^2
   }
 
   ans

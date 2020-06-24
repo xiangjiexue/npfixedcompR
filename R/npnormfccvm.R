@@ -36,21 +36,21 @@ gradientfunction.npnormcvm = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
     flexden = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta)
   }
   fullden = flexden - x$precompute
+  murep = rep(mu, rep(length(x$v), length(mu)))
   ans = vector("list", 3)
   names(ans) = c("d0", "d1", "d2")
   if (order[1] == 1){
-    temp = pnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$beta) * sum(pi0)
+    temp = pnorm(x$v, mean = murep, sd = x$beta) * sum(pi0)
     ans$d0 = .colSums((temp - flexden) * fullden, m = length(x$v), n = length(mu))
   }
   if (any(order[2:3] == 1)){
-    temp = dnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$beta) * sum(pi0)
+    temp = dnorm(x$v, mean = murep, sd = x$beta) * fullden
   }
   if (order[2] == 1){
-    ans$d1 = .colSums(temp * fullden, m = length(x$v), n = length(mu)) * -2
+    ans$d1 = .colSums(temp, m = length(x$v), n = length(mu)) * -2 * sum(pi0)
   }
   if (order[3] == 1){
-    xminusmu = x$v - rep(mu, rep(length(x$v), length(mu)))
-    ans$d2 = .colSums(temp * xminusmu * fullden, m = length(x$v), n = length(mu)) * -2
+    ans$d2 = .colSums(temp * (x$v - murep), m = length(x$v), n = length(mu)) * -2 * sum(pi0)
   }
 
   ans

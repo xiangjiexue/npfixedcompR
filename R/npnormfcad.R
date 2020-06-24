@@ -39,24 +39,25 @@ gradientfunction.npnormad = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
     flexden = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta)
     flexden2 = pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, lower.tail = FALSE)
   }
+  murep = rep(mu, rep(length(x$v), length(mu)))
   fullden = flexden + x$precompute1
   fullden2 = flexden2 + x$precompute2
   ans = vector("list", 3)
   names(ans) = c("d0", "d1", "d2")
   if (order[1] == 1){
     addconst = -sum(x$precompute1 * x$a1 / fullden + x$precompute2 * x$a2 / fullden2) + 2 * length(x$v)
-    ans$d0 = .colSums(pnorm(x$v, rep(mu, rep(length(x$v), length(mu))), sd = x$beta) * x$a1 / fullden +
-                        pnorm(x$v, rep(mu, rep(length(x$v), length(mu))), sd = x$beta, lower.tail = FALSE) * x$a2 / fullden2,
+    ans$d0 = .colSums(pnorm(x$v, murep, sd = x$beta) * x$a1 / fullden +
+                        pnorm(x$v, murep, sd = x$beta, lower.tail = FALSE) * x$a2 / fullden2,
                       m = length(x$v), n = length(mu)) * -sum(pi0) + addconst
   }
+  if (any(order[2:3] == 1)){
+    temp = dnorm(x$v, mean = murep, sd = x$beta) * (x$a1 / fullden - x$a2 / fullden2)
+  }
   if (order[2] == 1){
-    ans$d1 = .colSums(dnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$beta) *
-                        (x$a1 / fullden - x$a2 / fullden2), m = length(x$v), n = length(mu)) * sum(pi0)
+    ans$d1 = .colSums(temp, m = length(x$v), n = length(mu)) * sum(pi0)
   }
   if (order[3] == 1){
-    xminusmu = x$v - rep(mu, rep(length(x$v), length(mu)))
-    ans$d2 = .colSums(xminusmu * dnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$beta) *
-                        (x$a1 / fullden - x$a2 / fullden2), m = length(x$v), n = length(mu)) * sum(pi0) / x$beta^2
+    ans$d2 = .colSums((x$v - murep) * temp, m = length(x$v), n = length(mu)) * sum(pi0) / x$beta^2
   }
 
   ans
