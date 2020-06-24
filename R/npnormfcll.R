@@ -32,7 +32,8 @@ gradientfunction.npnormll = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
   }else{
     flexden = dnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta)
   }
-  temp = dnorm(x$v, mean = rep(mu, rep(length(x$v), length(mu))), sd = x$beta) * sum(pi0)
+  murep = rep(mu, rep(length(x$v), length(mu)))
+  temp = dnorm(x$v, mean = murep, sd = x$beta) * sum(pi0)
   fullden = flexden + x$precompute
   ans = vector("list", 3)
   names(ans) = c("d0", "d1", "d2")
@@ -40,7 +41,7 @@ gradientfunction.npnormll = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
     ans$d0 = .colSums((flexden - temp) / fullden, m = length(x$v), n = length(mu))
   }
   if (any(order[2:3] == 1)){
-    xminusmu = x$v - rep(mu, rep(length(x$v), length(mu)))
+    xminusmu = x$v - murep
     temp2 = temp / fullden
   }
   if (order[2] == 1){

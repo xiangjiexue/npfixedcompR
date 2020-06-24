@@ -149,8 +149,8 @@ solvegradientmultiple = function(x, mu0, pi0, points, tol = 1e-6, method = "auto
   switch(method,
          "auto" = {
           # minimal sample to test implementation
-          xx = makeobject(1, method = attr(x, "class"))
-          rr = gradientfunction(xx, 1, mu0 = 0, pi0 = 1, order = c(1, 1, 1))
+          xx = makeobject(points[1], method = attr(x, "class"), beta = x$beta) # in the case the structure parameter is compulsory.
+          rr = gradientfunction(xx, points[1], mu0 = 0, pi0 = 1, order = c(1, 1, 1))
           if (!is.null(rr$d2)){
             solvegradientmultipled2(x, mu0, pi0, points, tol)
           }else{

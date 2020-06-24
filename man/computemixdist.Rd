@@ -40,4 +40,7 @@ x = makeobject(data, pi0 = pi0, method = "npnormadw")
 computemixdist(x)
 x = makeobject(data, pi0 = pi0, method = "nptll")
 computemixdist(x)
+x = makeobject(extractlower(cor(matrix(rnorm(1000), nrow = 20, ncol = 50))),
+               method = "npnormcll", beta = 20)
+computemixdist(x)
 }

@@ -6,7 +6,7 @@
 #' @author Xiangjie Xue
 #' @importFrom stats dnorm uniroot pnorm dt optimise pt cov cov2cor
 #' @importFrom grDevices rainbow
-#' @importFrom graphics hist rect lines plot points
+#' @importFrom graphics hist rect lines plot points abline
 #' @importFrom lsei pnnls pnnqp
 #' @importFrom goftest qCvM qAD
 #' @importFrom nloptr nloptr
@@ -34,6 +34,10 @@ NULL
 #' - npnormadw : Binned version of normal density using Anderson-Darling
 #'
 #' - nptll : t density using maximum likelihood
+#'
+#' - npnormcll : one-parameter normal distribution used for approximate sample
+#' correlation coefficients using maximum likelihood. This does not have a
+#' corresponding estimation of zero due to incomplete of theory.
 #'
 #' The default method used is npnormll.
 #'
@@ -121,6 +125,9 @@ gradientfunction = function(x, mu, mu0, pi0, order){
 #' x = makeobject(data, pi0 = pi0, method = "npnormadw")
 #' computemixdist(x)
 #' x = makeobject(data, pi0 = pi0, method = "nptll")
+#' computemixdist(x)
+#' x = makeobject(extractlower(cor(matrix(rnorm(1000), nrow = 20, ncol = 50))),
+#'                method = "npnormcll", beta = 20)
 #' computemixdist(x)
 #' @export
 computemixdist = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
