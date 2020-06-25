@@ -4,61 +4,44 @@ solvegradientsingled1 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
   a = lower; b = upper
   f1 = gradientfunction(x = x, mu = c(a, b), mu0 = mu0, pi0 = pi0, order = c(0, 1, 0))$d1
   fa = f1[1:length(a)]; fb = f1[(length(a) + 1) : length(f1)]
-  j0 = abs(fa) < abs(fb)
-  # swap a, b
-  temp = a[j0]; a[j0] = b[j0]; b[j0] = temp
-  temp = fa[j0]; fa[j0] = fb[j0]; fb[j0] = temp
-  c = a; fc = fa
-  s = numeric(length(a)); fs = numeric(length(a))
-  c1 = numeric(length(a))
-  d = numeric(length(a))
-  # set the mflag (mflag = TRUE)
-  mflag = rep(TRUE, length(a))
+
+  fs = fa; s = a
+  fc = numeric(length(a))
   index = rep(FALSE, length(a))
   repeat{
     if (sum(index) == length(a))
       break
 
-    index = abs(fb) < tol | abs(fc) < tol | abs(b - a) < tol
+    index = abs(fb) < tol | abs(fs) < tol | abs(b - a) < tol
+
+    c1 = (a + b) / 2
+    fc[!index] = gradientfunction(x, c1[!index], mu0, pi0, order = c(0, 1, 0))$d1
 
     # does not matter how the following changes for a[index], b[index], etc. changes, not referenced as long as
     # s is not assigned to a or b
     j0 = fa != fc & fb != fc
     s[j0] = a[j0] * fb[j0] * fc[j0] / (fa[j0] - fb[j0]) / (fa[j0] - fc[j0]) +
       b[j0] * fa[j0] * fc[j0] / (fb[j0] - fa[j0]) / (fb[j0] - fc[j0]) +
-      c[j0] * fa[j0] * fb[j0] / (fc[j0] - fa[j0]) / (fc[j0] - fb[j0])
+      c1[j0] * fa[j0] * fb[j0] / (fc[j0] - fa[j0]) / (fc[j0] - fb[j0])
     s[!j0] = b[!j0] - fb[!j0] * (b[!j0] - a[!j0]) / (fb[!j0] - fa[!j0])
 
-    # condition 1
-    j0 = a < b
-    c1[j0] = s[j0] > (3 * a[j0] + b[j0]) / 4 & s[j0] < b[j0]
-    c1[!j0] = s[!j0] < (3 * a[!j0] + b[!j0]) / 4 & s[!j0] > b[!j0]
-    # condition 2
-    c2 = mflag & abs(s - b) > abs(b - c) / 2
-    # condition 3
-    c3 = !mflag & abs(s - b) >= abs(c - d) / 2
-    # condition 4
-    c4 = mflag & abs(b - c) < tol
-    # condition 5
-    c5 = !mflag & abs(c - d) < tol
-
-    cond = c1 | c2 | c3 | c4 | c5
-
-    s[cond] = (a[cond] + b[cond]) / 2
-    mflag[cond] = TRUE
-    mflag[!cond] = FALSE
-
     fs[!index] = gradientfunction(x, s[!index], mu0, pi0, order = c(0, 1, 0))$d1
-    d = c; c = b
 
-    j0 = fa * fs < 0
-    b[j0 & !index] = s[j0 & !index]; fb[j0 & !index] = s[j0 & !index]
-    a[!j0 & !index] = s[!j0 & !index]; fa[!j0 & !index] = s[!j0 & !index]
+    j0 = c1 > s
+    temp = c1[j0]; c1[j0] = s[j0]; s[j0] = temp
+    temp = fc[j0]; fc[j0] = fs[j0]; fs[j0] = temp
 
-    j0 = abs(fa) < abs(fb)
-    # swap a, b
-    temp = a[j0]; a[j0] = b[j0]; b[j0] = temp
-    temp = fa[j0]; fa[j0] = fb[j0]; fb[j0] = temp
+    j0 = fc * fs < 0
+    a[j0 & !index] = s[j0 & !index]
+    fa[j0 & !index] = fs[j0 & !index]
+    b[j0 & !index] = c1[j0 & !index]
+    fb[j0 & !index] = fc[j0 & !index]
+
+    j1 = fs * fb < 0
+    a[!j0 & j1 & !index] = c1[!j0 & j1 & !index]
+    fa[!j0 & j1 & !index] = fc[!j0 & j1 & !index]
+    b[!j0 & !j1 & !index] = s[!j0 & !j1 & !index]
+    fb[!j0 & !j1 & !index] = fs[!j0 & !j1 & !index]
   }
 
   b
