@@ -119,10 +119,10 @@ covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
   if (estpi0){
     if (length(fisherdata[!index]) > 5000){
       x = makeobject(fisherdata[!index], method = "npnormllw", order = order, beta = sqrt(1 / (n - 3)))
-      r = estpi0(x, verbose = verbose)
+      r = estpi0(x, verbose = verbose, val = 1)
     }else{
       x = makeobject(fisherdata[!index], beta = sqrt(1 / (n - 3)))
-      r = estpi0(x, verbose = verbose)
+      r = estpi0(x, verbose = verbose, val = 1)
     }
   }else{
     if (length(fisherdata[!index]) > 5000){
@@ -151,9 +151,17 @@ covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
 
 #' plot the mapping between the original observations and its posterior mean
 #'
+#' This function explicity considers that map between the transformed sample
+#' correlation coefficients to the posterior mean of tanh(x) under normal cases.
+#' \code{result} typically is the mixing distribution of the transformed sample
+#' correlations and \code{result2} is the mixing distribution on the sample
+#' correlation scale.
+#'
 #' @title plot the posterier map
 #' @param x a vector of observations
-#' @param result an object of class nspmix
+#' @param result an object of class nspmix to show in the top
+#' @param result2 an object of class nspmix to show in the bottom. If NULL,
+#' then the density in the bottom is not drawn.
 #' @param ... other parameter passed to \code{plot}
 #' @return none
 #' @examples
@@ -164,24 +172,49 @@ covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
 #' r1 = computemixdist(x)
 #' plotposteriormapping(extractlower(r), r1)
 #' @export
-plotposteriormapping = function(x, result, ...){
+plotposteriormapping = function(x, result, result2 = NULL, ...){
   values = 0;
   plot(values, 0, xlim = range(x), ylim = c(0, 1), type = "n", ylab = "", yaxt = "n", ...)
   ordered.x = sort(x)
-  postmean = posteriormean(ordered.x, result)
+  postmean = posteriormean(ordered.x, result, tanh)
   cols = rainbow(length(ordered.x), end = 0.85)
-  sapply(1:length(ordered.x), function(ddd){
-    points(ordered.x[ddd], 1, col = cols[ddd], pch = 16)
-    points(postmean[ddd], 0.1, col = cols[ddd], pch = 16)
-    lines(c(ordered.x[ddd], postmean[ddd]), c(1, 0.1), col = cols[ddd])
-  })
-  points(result$mix$pt, rep(0, length(result$mix$pt)))
-  sapply(1:length(result$mix$pr), function(ddd){
-    lines(rep(result$mix$pt[ddd], 2), c(0, result$mix$pr[ddd] * 0.05), lwd = 3)
-  })
-  d = seq(min(x), to = max(x), length = 1000)
-  dens = dnpnorm(d, mu0 = result$mix$pt, pi0 = result$mix$pr, sd = result$beta)
-  lines(d, dens / max(dens) * 0.06 , col = "red", lwd = 2)
-  abline(h = 0, lwd = 0.5)
+  if (is.null(result2)){
+    sapply(1:length(ordered.x), function(ddd){
+      points(ordered.x[ddd], 0.7, col = cols[ddd], pch = 16)
+      points(postmean[ddd], 0, col = cols[ddd], pch = 16)
+      lines(c(ordered.x[ddd], postmean[ddd]), c(0.7, 0), col = cols[ddd])
+    })
+    points(result$mix$pt, rep(0.75, length(result$mix$pt)))
+    sapply(1:length(result$mix$pr), function(ddd){
+      lines(rep(result$mix$pt[ddd], 2), 0.75 + c(0, result$mix$pr[ddd] * 0.25), lwd = 3)
+    })
+    d = seq(min(x), to = max(x), length = 1000)
+    dens = dnpnorm(d, mu0 = result$mix$pt, pi0 = result$mix$pr, sd = result$beta)
+    lines(d, dens / max(dens) * 0.25 + 0.75 , col = "red", lwd = 2)
+    abline(h = 0.75, lwd = 0.5)
+  }else{
+    sapply(1:length(ordered.x), function(ddd){
+      points(ordered.x[ddd], 0.7, col = cols[ddd], pch = 16)
+      points(postmean[ddd], 0.3, col = cols[ddd], pch = 16)
+      lines(c(ordered.x[ddd], postmean[ddd]), c(0.7, 0.3), col = cols[ddd])
+    })
+    points(result$mix$pt, rep(0.75, length(result$mix$pt)))
+    sapply(1:length(result$mix$pr), function(ddd){
+      lines(rep(result$mix$pt[ddd], 2), 0.75 + c(0, result$mix$pr[ddd] * 0.25), lwd = 3)
+    })
+    d = seq(min(x), to = max(x), length = 1000)
+    dens = dnpnorm(d, mu0 = result$mix$pt, pi0 = result$mix$pr, sd = result$beta)
+    lines(d, dens / max(dens) * 0.25 + 0.75 , col = "red", lwd = 2)
+    abline(h = 0.75, lwd = 0.5)
+
+    points(result2$mix$pt, rep(0.25, length(result2$mix$pt)))
+    sapply(1:length(result2$mix$pr), function(ddd){
+      lines(rep(result2$mix$pt[ddd], 2), 0.25 - c(0, result2$mix$pr[ddd] * 0.25), lwd = 3)
+    })
+    dens2 = dnpnormc(d, mu0 = result2$mix$pt, pi0 = result2$mix$pr, n = ceiling((1 / result$beta)^2 + 3))
+    lines(d, 0.25 - dens / max(dens) * 0.25, col = "red", lwd = 2)
+    abline(h = 0.25, lwd = 0.5)
+  }
+
   NULL
 }

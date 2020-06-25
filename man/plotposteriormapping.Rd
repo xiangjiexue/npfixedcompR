@@ -4,12 +4,15 @@
 \alias{plotposteriormapping}
 \title{plot the posterier map}
 \usage{
-plotposteriormapping(x, result, ...)
+plotposteriormapping(x, result, result2 = NULL, ...)
 }
 \arguments{
 \item{x}{a vector of observations}
 
-\item{result}{an object of class nspmix}
+\item{result}{an object of class nspmix to show in the top}
+
+\item{result2}{an object of class nspmix to show in the bottom. If NULL,
+then the density in the bottom is not drawn.}
 
 \item{...}{other parameter passed to \code{plot}}
 }
@@ -18,6 +21,13 @@ none
 }
 \description{
 plot the mapping between the original observations and its posterior mean
+}
+\details{
+This function explicity considers that map between the transformed sample
+correlation coefficients to the posterior mean of tanh(x) under normal cases.
+\code{result} typically is the mixing distribution of the transformed sample
+correlations and \code{result2} is the mixing distribution on the sample
+correlation scale.
 }
 \examples{
 n = 100; p = 50
