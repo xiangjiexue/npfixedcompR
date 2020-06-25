@@ -5,7 +5,7 @@ solvegradientsingled1 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
   f1 = gradientfunction(x = x, mu = c(a, b), mu0 = mu0, pi0 = pi0, order = c(0, 1, 0))$d1
   fa = f1[1:length(a)]; fb = f1[(length(a) + 1) : length(f1)]
 
-  fs = fa; s = a
+  fs = fb; s = b
   fc = numeric(length(a))
   index = rep(FALSE, length(a))
   repeat{
@@ -28,20 +28,20 @@ solvegradientsingled1 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
     fs[!index] = gradientfunction(x, s[!index], mu0, pi0, order = c(0, 1, 0))$d1
 
     j0 = c1 > s
-    temp = c1[j0]; c1[j0] = s[j0]; s[j0] = temp
-    temp = fc[j0]; fc[j0] = fs[j0]; fs[j0] = temp
+    temp = c1[j0 & !index]; c1[j0 & !index] = s[j0 & !index]; s[j0 & !index] = temp
+    temp = fc[j0 & !index]; fc[j0 & !index] = fs[j0 & !index]; fs[j0 & !index] = temp
 
-    j0 = fc * fs < 0
-    a[j0 & !index] = s[j0 & !index]
-    fa[j0 & !index] = fs[j0 & !index]
+    j0 = fs > 0
+    a[!j0 & !index] = s[!j0 & !index]
+    fa[!j0 & !index] = fs[!j0 & !index]
+    b[j0 & !index] = s[j0 & !index]
+    fb[j0 & !index] = fs[j0 & !index]
+
+    j0 = fc > 0
+    a[!j0 & !index] = c1[!j0 & !index]
+    fa[!j0 & !index] = fc[!j0 & !index]
     b[j0 & !index] = c1[j0 & !index]
     fb[j0 & !index] = fc[j0 & !index]
-
-    j1 = fs * fb < 0
-    a[!j0 & j1 & !index] = c1[!j0 & j1 & !index]
-    fa[!j0 & j1 & !index] = fc[!j0 & j1 & !index]
-    b[!j0 & !j1 & !index] = s[!j0 & !j1 & !index]
-    fb[!j0 & !j1 & !index] = fs[!j0 & !j1 & !index]
   }
 
   b

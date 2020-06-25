@@ -106,11 +106,9 @@ posteriormean.npt = function(x, result, fun = function(x) x){
 #' @param verbose logical; If TRUE, the intermediate results will be shown.
 #' @return a covariance matrix estimate of size p * p.
 #' @examples
-#' \dontrun{
 #' n = 100; p = 50
 #' X = matrix(rnorm(n * p), nrow = n, ncol = p)
 #' r = covestEB(X)
-#' }
 #' @export
 covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
   p = dim(X)[2]
@@ -162,14 +160,12 @@ covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
 #' @param ... other parameter passed to \code{plot}
 #' @return none
 #' @examples
-#' \dontrun{
 #' n = 100; p = 50
 #' X = matrix(rnorm(n * p), nrow = n, ncol = p)
 #' r = covestEB(X)
 #' x = makeobject(extractlower(r))
 #' r1 = computemixdist(x)
 #' plotposteriormapping(extractlower(r), r1)
-#' }
 #' @export
 plotposteriormapping = function(x, result, result2 = NULL, ...){
   values = 0;

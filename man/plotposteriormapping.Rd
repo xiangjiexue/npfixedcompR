@@ -30,12 +30,10 @@ correlations and \code{result2} is the mixing distribution on the sample
 correlation scale.
 }
 \examples{
-\dontrun{
 n = 100; p = 50
 X = matrix(rnorm(n * p), nrow = n, ncol = p)
 r = covestEB(X)
 x = makeobject(extractlower(r))
 r1 = computemixdist(x)
 plotposteriormapping(extractlower(r), r1)
-}
 }
