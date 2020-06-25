@@ -24,7 +24,9 @@ a covariance matrix estimate of size p * p.
 Estimating covariance matrix using Empirical Bayes
 }
 \examples{
+\dontrun{
 n = 100; p = 50
 X = matrix(rnorm(n * p), nrow = n, ncol = p)
 r = covestEB(X)
+}
 }

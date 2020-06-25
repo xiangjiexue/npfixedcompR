@@ -106,41 +106,38 @@ posteriormean.npt = function(x, result, fun = function(x) x){
 #' @param verbose logical; If TRUE, the intermediate results will be shown.
 #' @return a covariance matrix estimate of size p * p.
 #' @examples
+#' \dontrun{
 #' n = 100; p = 50
 #' X = matrix(rnorm(n * p), nrow = n, ncol = p)
 #' r = covestEB(X)
+#' }
 #' @export
 covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
   p = dim(X)[2]
   n = dim(X)[1]
   covest = cov(X)
   fisherdata = atanh(extractlower(cov2cor(covest)))
-  index = abs(fisherdata) > 3
   if (estpi0){
-    if (length(fisherdata[!index]) > 5000){
-      x = makeobject(fisherdata[!index], method = "npnormllw", order = order, beta = sqrt(1 / (n - 3)))
+    if (length(fisherdata) > 5000){
+      x = makeobject(fisherdata, method = "npnormllw", order = order, beta = sqrt(1 / (n - 3)))
       r = estpi0(x, verbose = verbose, val = 1)
     }else{
-      x = makeobject(fisherdata[!index], beta = sqrt(1 / (n - 3)))
+      x = makeobject(fisherdata, beta = sqrt(1 / (n - 3)))
       r = estpi0(x, verbose = verbose, val = 1)
     }
   }else{
-    if (length(fisherdata[!index]) > 5000){
-      x = makeobject(fisherdata[!index], method = "npnormllw", order = order, beta = sqrt(1 / (n - 3)))
+    if (length(fisherdata) > 5000){
+      x = makeobject(fisherdata, method = "npnormllw", order = order, beta = sqrt(1 / (n - 3)))
       r = computemixdist(x, verbose = verbose)
     }else{
-      x = makeobject(fisherdata[!index], beta = sqrt(1 / (n - 3)))
+      x = makeobject(fisherdata, beta = sqrt(1 / (n - 3)))
       r = computemixdist(x, verbose = verbose)
     }
   }
 
-  postmean = posteriormean(fisherdata[!index], r, fun = tanh)
+  postmean = posteriormean(fisherdata, r, fun = tanh)
 
-  ans = numeric(length(fisherdata))
-  ans[!index] = postmean
-  ans[index] = tanh(fisherdata[index])
-
-  ans = returnlower(ans)
+  ans = returnlower(postmean)
 
   ans = CorrelationMatrix(ans, b = rep(1, p), tol = 1e-3)$CorrMat
 
@@ -165,12 +162,14 @@ covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
 #' @param ... other parameter passed to \code{plot}
 #' @return none
 #' @examples
+#' \dontrun{
 #' n = 100; p = 50
 #' X = matrix(rnorm(n * p), nrow = n, ncol = p)
 #' r = covestEB(X)
 #' x = makeobject(extractlower(r))
 #' r1 = computemixdist(x)
 #' plotposteriormapping(extractlower(r), r1)
+#' }
 #' @export
 plotposteriormapping = function(x, result, result2 = NULL, ...){
   values = 0;
