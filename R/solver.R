@@ -90,6 +90,7 @@ solvegradientsingled2 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
   r = gradientfunction(x, init, mu0, pi0, order = c(0, 1, 1))
   d1 = r$d1
   d2 = r$d2
+  d = numeric(length(lower))
 
   index = rep(FALSE, length(neg))
   repeat{
@@ -97,16 +98,20 @@ solvegradientsingled2 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
       break
     index = abs(d1) < tol | pos - neg < tol
 
+    s = (pos + neg) / 2
+    d[!index] = gradientfunction(x, s[!index], mu0, pi0, order = c(0, 1, 0))$d1
+
+    j0 = d < 0
+    neg[j0 & !index] = pmax(neg[j0 & !index], s[j0 & !index])
+    pos[!j0 & !index] = pmin(pos[!j0 & !index], s[!j0 & !index])
+
     j0 = d1 < 0
     neg[j0] = pmax(neg[j0], init[j0])
     pos[!j0] = pmin(pos[!j0], init[!j0])
 
     init[!index] = init[!index] - d1[!index] / d2[!index]
-
-    j0 = ((init - neg) < 0.1 * (pos - neg) | init < neg) & !index
-    init[j0] = (pos[j0] - neg[j0]) * 0.1 + neg[j0]
-    j0 = ((init - neg) > 0.9 * (pos - neg) | init > pos) & !index
-    init[j0] = (pos[j0] - neg[j0]) * 0.9 + neg[j0]
+    j0 = init > neg & init < pos
+    init[!index & !j0] = (pos[!index & !j0] + neg[!index & !j0]) / 2
 
     r = gradientfunction(x, init[!index], mu0, pi0, order = c(0, 1, 1))
     d1[!index] = r$d1
