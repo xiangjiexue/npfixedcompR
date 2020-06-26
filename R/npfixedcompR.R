@@ -4,7 +4,7 @@
 #'
 #' @docType package
 #' @author Xiangjie Xue
-#' @importFrom stats dnorm uniroot pnorm dt optimise pt cov cov2cor
+#' @importFrom stats dnorm uniroot pnorm dt optimise pt cov cov2cor runif
 #' @importFrom grDevices rainbow
 #' @importFrom graphics hist rect lines plot points abline
 #' @importFrom lsei pnnls pnnqp

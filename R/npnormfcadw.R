@@ -69,7 +69,7 @@ computemixdist.npnormadw = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ve
     rx = range(x$v)
     breaks = pmax(ceiling(diff(rx) / (5 * x$beta)), 10)   # number of breaks
     r = whist(x$v, x$w, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
-    r$density = pmax(0, r$density - pnpnorm(r$breaks[-1], mu0 = x$mu0, pi0 = x$pi0, sd = x$beta) +
+    r$density = pmax(0, r$density  / sum(r$density) - pnpnorm(r$breaks[-1], mu0 = x$mu0, pi0 = x$pi0, sd = x$beta) +
                        pnpnorm(r$breaks[-length(r$breaks)], mu0 = x$mu0, pi0 = x$pi0, sd = x$beta))
     mu0 = r$mids[r$density != 0]
     pi0 = r$density[r$density != 0] / sum(r$density)
