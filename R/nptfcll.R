@@ -1,3 +1,16 @@
+#' The density and the distribution function of non-parametric t distribution
+#'
+#' \code{dnpnorm} gives the density, \code{pnpnorm} gives the distribution function,
+#'
+#' @title non-parametric t distribution
+#' @param x vector of observations, vector of quantiles
+#' @param mu0 the vector of support points
+#' @param df degree of freedom.
+#' @param pi0 the vector of weights correponding to the support points
+#' @param lower.tail logical; if TRUE, the lower probability is computed
+#' @param log,log.p logical; if TRUE, the result will be given in log scale.
+#' @rdname npt
+#' @export
 dnpt = function(x, mu0 = 0, pi0 = 0, df, log = FALSE){
   if (length(mu0) != length(pi0))
     stop("Length mismatch")
@@ -6,6 +19,8 @@ dnpt = function(x, mu0 = 0, pi0 = 0, df, log = FALSE){
   if (log) log(temp) else temp
 }
 
+#' @rdname npt
+#' @export
 pnpt = function(x, mu0 = 0, pi0 = 0, df, lower.tail = TRUE, log.p = FALSE){
   if (length(mu0) != length(pi0))
     stop("Length mismatch")
