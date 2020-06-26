@@ -1,6 +1,21 @@
 # This file contains general functions used in npnorm family
 # functions for normal mixture
 
+#' The density and the distribution function of non-parametric normal distribution
+#'
+#' \code{dnpnorm} gives the density, \code{pnpnorm} gives the distribution function,
+#' \code{pnpnorm1} focus on the more accurate but slower distribution function of
+#' a non-parametric normal distribution
+#'
+#' @title non-parametric normal distribution
+#' @param x vector of observations, vector of quantiles
+#' @param mu0 the vector of support points
+#' @param sd standard deviation.
+#' @param pi0 the vector of weights correponding to the support points
+#' @param lower.tail logical; if TRUE, the lower probability is computed
+#' @param log,log.p logical; if TRUE, the result will be given in log scale.
+#' @rdname npnorm
+#' @export
 dnpnorm = function(x, mu0 = 0, pi0 = 1, sd = 1, log = FALSE){
   # This version explicitly allow subprobability measures.
   # Hence no check on pi0
@@ -12,6 +27,8 @@ dnpnorm = function(x, mu0 = 0, pi0 = 1, sd = 1, log = FALSE){
   if (log) log(temp) else temp
 }
 
+#' @rdname npnorm
+#' @export
 pnpnorm = function(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE){
   # This version explicitly allow subprobability measures.
   # Hence no check on pi0
@@ -23,6 +40,8 @@ pnpnorm = function(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE
   if (log.p) log(temp) else temp
 }
 
+#' @rdname npnorm
+#' @export
 pnpnorm1 = function(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE){
   if (length(mu0) != length(pi0))
     stop("Length mismatch")
@@ -57,6 +76,25 @@ logspace.sub = function(lx, ly){
   lx + log1mexp(lx - ly)
 }
 
+#' The density and the distribution function of (non-parametric) discrete normal distribution
+#'
+#' \code{ddiscnorm} gives the density, \code{pdiscnorm} gives the distribution function of
+#' the discrete normal distribution. \code{dnpdiscnorm} gives the density, \code{pnpdiscnorm}
+#' gives the distribution function of the non-parametric discrete normal distribution.
+#'
+#' The function \code{pnpdiscnorm} uses \code{pnpnorm1} to compute the distribution
+#' function.
+#'
+#' @title (non-parametric) discrete normal distribution
+#' @param x vector of observations, vector of quantiles
+#' @param mu0,mean the vector of support points
+#' @param pi0 the vector of weights correponding to the support points \code{mu0}
+#' @param sd standard deviation.
+#' @param h the discretisation parameter.
+#' @param lower.tail logical; if TRUE, the lower probability is computed
+#' @param log,log.p logical; if TRUE, the result will be given in log scale.
+#' @rdname discnorm
+#' @export
 ddiscnorm = function(x, mean = 0, sd = 1, h = 1, log = FALSE){
   LLL = max(length(x), length(mean))
   xx = rep(x, length.out = LLL)
@@ -65,6 +103,8 @@ ddiscnorm = function(x, mean = 0, sd = 1, h = 1, log = FALSE){
   if (log) temp else exp(temp)
 }
 
+#' @rdname discnorm
+#' @export
 dnpdiscnorm = function(x, mu0 = 0, pi0 = 0, sd = 1, h = 1, lower.tail = TRUE, log.p = FALSE){
   j0 = pi0 == 0
   if (sum(!j0) > 0){
@@ -81,10 +121,14 @@ dnpdiscnorm = function(x, mu0 = 0, pi0 = 0, sd = 1, h = 1, lower.tail = TRUE, lo
   if (log.p) temp else exp(temp)
 }
 
+#' @rdname discnorm
+#' @export
 pdiscnorm = function(x, mean =  0, sd = 1, h = 1, lower.tail = TRUE, log.p = FALSE){
   pnorm(x + h, mean = mean, sd = sd, lower.tail = lower.tail, log.p = log.p)
 }
 
+#' @rdname discnorm
+#' @export
 pnpdiscnorm = function(x, mu0 = 0, pi0 = 0, sd = 1, h = 1, lower.tail = TRUE, log.p = FALSE){
   pnpnorm1(x + h, mu0 = mu0, pi0 = pi0, sd = sd, lower.tail = lower.tail, log.p = log.p)
 }
