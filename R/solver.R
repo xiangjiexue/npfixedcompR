@@ -27,15 +27,13 @@ solvegradientsingled1 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
 
     fs[!index] = gradientfunction(x, s[!index], mu0, pi0, order = c(0, 1, 0))$d1
 
-    j0 = c1 > s
-    temp = c1[j0 & !index]; c1[j0 & !index] = s[j0 & !index]; s[j0 & !index] = temp
-    temp = fc[j0 & !index]; fc[j0 & !index] = fs[j0 & !index]; fs[j0 & !index] = temp
-
     j0 = fs > 0
-    a[!j0 & !index] = s[!j0 & !index]
-    fa[!j0 & !index] = fs[!j0 & !index]
-    b[j0 & !index] = s[j0 & !index]
-    fb[j0 & !index] = fs[j0 & !index]
+    j1 = s > a
+    a[!j0 & !index & j1] = s[!j0 & !index & j1]
+    fa[!j0 & !index & j1] = fs[!j0 & !index & j1]
+    j1 = s < b
+    b[j0 & !index & j1] = s[j0 & !index & j1]
+    fb[j0 & !index & j1] = fs[j0 & !index & j1]
 
     j0 = fc > 0
     a[!j0 & !index] = c1[!j0 & !index]
@@ -102,8 +100,8 @@ solvegradientsingled2 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
     d[!index] = gradientfunction(x, s[!index], mu0, pi0, order = c(0, 1, 0))$d1
 
     j0 = d < 0
-    neg[j0 & !index] = pmax(neg[j0 & !index], s[j0 & !index])
-    pos[!j0 & !index] = pmin(pos[!j0 & !index], s[!j0 & !index])
+    neg[j0 & !index] = s[j0 & !index]
+    pos[!j0 & !index] = s[!j0 & !index]
 
     j0 = d1 < 0
     neg[j0] = pmax(neg[j0], init[j0])
@@ -181,26 +179,39 @@ solveestpi0 = function(x, init, val, mix = NULL, tol = 1e-6, maxiter = 100, verb
     if (iter > maxiter | abs(d1) < tol | pos - neg < tol)
       break
     iter = iter + 1
+
     if (d1 < 0){
+      if ((init - neg) / (pos - neg) < 0.5){
+        s = (pos + neg) / 2
+        x = makeobject(x, pi0 = s, method = attr(x, "class"))
+        r2 = computemixdist(x, mix = mix, maxiter = maxiter, tol = tol)
+
+        if (r2$ll + val < 0){
+          neg = s
+        }else{
+          pos = s
+        }
+      }
       neg = max(neg, init)
     }else{
+      if ((pos - init) / (pos - neg) < 0.5){
+        s = (pos + neg) / 2
+        x = makeobject(x, pi0 = s, method = attr(x, "class"))
+        r2 = computemixdist(x, mix = mix, maxiter = maxiter, tol = tol)
+
+        if (r2$ll + val < 0){
+          neg = s
+        }else{
+          pos = s
+        }
+      }
       pos = min(pos, init)
     }
 
     init = init - d1 / d2
 
-    # remember the curve, if the current point in the left, this should never happen.
-    # if the current point is in the right, then its value should be close the true one.
-    if ((init - neg) < 0.1 * (pos - neg) | init < neg){
-        init = (pos - neg) * 0.7 + neg
-    }
-
-    # remember the curve, if the current point is in the right, then the current point must be steep
-    # it should be correct to a smaller value.
-    # if the current point is in the left, then the current point is too small and map to a high value
-    # then it should also be corrected to a value smaller than right boundary
-    if ((init - neg) > 0.9 * (pos - neg) | init > pos){
-        init = (pos - neg) * 0.75 + neg
+    if (init < neg | init > pos){
+      init = (pos + neg) / 2
     }
 
     x = makeobject(x, pi0 = init, method = attr(x, "class"))
