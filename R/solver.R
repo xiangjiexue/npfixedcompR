@@ -109,7 +109,8 @@ solvegradientsingled2 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
 
     init[!index] = init[!index] - d1[!index] / d2[!index]
     j0 = init > neg & init < pos
-    init[!index & !j0] = (pos[!index & !j0] + neg[!index & !j0]) / 2
+    p = runif(1, min = 0.1, max = 0.9)
+    init[!index & !j0] =  p * pos[!index & !j0] + (1 - p) * neg[!index & !j0]
 
     r = gradientfunction(x, init[!index], mu0, pi0, order = c(0, 1, 1))
     d1[!index] = r$d1
