@@ -132,6 +132,50 @@ solvegradientmultipled2 = function(x, mu0, pi0, points, tol = 1e-6){
   r
 }
 
+#' This function is used for finding the support points by finding the local minima.
+#'
+#' This series functions has three layers: The first layer \code{solvegradientmultiple} chooses the algorithm
+#' to use, the second layer \code{solvegradientmultipled0}, \code{solvegradientmultipled1},
+#' \code{solvegradientmultipled2} doing the simple derivative tests to narrow down the search space to be
+#' the local minima (since all the optimisation problems have been done through minimisation), the third
+#' layer \code{solvegradientsingled0}, \code{solvegradientsingled1}, \code{solvegradientsingled2} is the
+#' larbour functions do the minimisation.
+#'
+#' Three different algorithms are implmented:
+#'
+#' - The derivative-free minimisation: the derivative-free minimisation is used when the gradient
+#' function only have \code{d0} implemented. The implementation is the \code{\link{optimise}} function
+#' in base R pacakge.
+#'
+#' - The derivative-free root-finding algorithm: the derivative-free root-finding is used when
+#' the gradient function have \code{d1} implemented. The implementaion is the vectorised reduction version of the
+#' modified Brent's method by Zhang (2011) with modifications tailored to this problem. The modification
+#' ensure that in each iteration, the search space is at least half of the one from last iteration.
+#'
+#' - The first-order root-finding algorithm: the first-order root-finding is used when the gradient
+#' function have both \code{d1} and \code{d2} implemented. The implementation is the vectorised reduction
+#' Newton-Raphson method with modifications tailored to this problem. The modification ensures that
+#' in each iteration, the search space is at least half of the one from last iteration.
+#'
+#' Vectorised reduction algorithms means that the function can have vectors of \code{lower} and \code{upper}
+#' as inputs and when any element in each iteration satisfies the stopping criterion, it will not be
+#' computed further. This should be more efficient when dealing with large datasets since logical operators
+#' on a smaller set should always be computationally cheaper than keeping computing that support points to
+#' an unnecessary accuracy.
+#'
+#' Note: This function is not an exported object.
+#'
+#' @title computing the support points
+#' @param x a object from implemented family
+#' @param mu0 a vector of support points
+#' @param pi0 a vector of weights corresponding to the support points
+#' @param points given grid points for finding the local minima (if exists)
+#' @param tol tolerance
+#' @param method the character strings specifying which algorithm to use. \code{method = "auto"} choose
+#' the algorithm automatically, \code{method = "d0"} chooses the derivative-free minimisation,
+#' \code{method = "d1"} chooses the derivative-free root-finding and \code{method = "d2"} chooses the
+#' first-order root-finding.
+#' @author Xiangjie Xue
 solvegradientmultiple = function(x, mu0, pi0, points, tol = 1e-6, method = "auto"){
   # Here mu0 and pi0 is always fixed. since R has a copying sematics, we can modify
   # the x object so that it pre-computes flexden to save some time.

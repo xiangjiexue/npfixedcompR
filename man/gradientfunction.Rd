@@ -34,7 +34,8 @@ the algorithms automatically by specifying \code{method = "auto"} and the algori
 based on the minimal working output in the family. Alternatively, if a user know which algorithm
 is most efficient, the specification of algorithm can be made by \code{method = "d0"}
 (derivative-free minimisation), \code{method = "d1"} (derivative-free root finding) and
-\code{method = "d1"} (root-finding using first derivative.).
+\code{method = "d1"} (root-finding using first derivative.); see \code{\link{solvegradientmultiple}}
+for more detail.
 
 The full list of implemented family is in \code{\link{makeobject}}.
 }

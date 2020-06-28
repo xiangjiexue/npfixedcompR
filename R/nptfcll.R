@@ -31,7 +31,20 @@ pnpt = function(x, mu0 = 0, pi0 = 0, df, lower.tail = TRUE, log.p = FALSE){
 
 gridpointsnpt = function(x, grid=100) {
   rx = range(x$v)
-  if (is.finite(x$beta) & x$beta >= 3) {fac = sqrt(x$beta / (x$beta - 2))} else fac = 1
+  if (is.finite(x$beta) & x$beta >= 3) {
+    fac = sqrt(x$beta / (x$beta - 2))
+    if (rx[2] > 0) {
+      rx[2] = rx[2] * sqrt((2 * x$beta + 5) / 2 / x$beta)
+    } else {
+      rx[2] = rx[2] * sqrt((x$beta + 1) / x$beta)
+    }
+
+    if (rx[1] > 0) {
+      rx[1] = rx[1] * sqrt((x$beta + 1) / x$beta)
+    } else {
+      rx[1] = rx[1] * sqrt((2 * x$beta + 5) / 2 / x$beta)
+    }
+  } else {fac = 1}
   breaks = pmax(ceiling(diff(rx) / (5 * fac)), 5)   # number of breaks
   if (is.null(x$w)) {w = rep(1, length(x$v))} else {w = x$w}
   r = whist(x$v, w, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
