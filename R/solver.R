@@ -167,7 +167,7 @@ solveestpi0 = function(x, init, val, mix = NULL, tol = 1e-6, maxiter = 100, verb
   x = makeobject(x, pi0 = init, method = attr(x, "class"))
   r = computemixdist(x, mix = mix, maxiter = maxiter, tol = tol)
   d1 = r$ll + val
-  d2 = r$dd0
+  d2 = r$dd0 / (1 - init)
   repeat{
     if (verbose){
       cat("Iteration", iter, "\n")
@@ -219,7 +219,7 @@ solveestpi0 = function(x, init, val, mix = NULL, tol = 1e-6, maxiter = 100, verb
     newmix = list(pt = r$mix$pt[!j0], pr = r$mix$pr[!j0] / sum(r$mix$pr[!j0]))
     r = computemixdist(x, mix = newmix, maxiter = maxiter, tol = tol)
     d1 = r$ll + val
-    d2 = r$dd0
+    d2 = r$dd0 / (1 - init)
   }
 
   r
