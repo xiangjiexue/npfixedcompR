@@ -295,3 +295,15 @@ bin = function(data, order = -5){
   index = t != 0
   list(v = as.numeric(names(t))[index], w = as.numeric(t)[index])
 }
+
+estpi0d = function(x, mu0, pi0){
+  UseMethod("estpi0d")
+}
+
+estpi0d.default = function(x, mu0, pi0){
+  ans = vector("list", 2)
+  names(ans) = c("d2", "d3")
+  x = makeobject(x, pi0 = 0, method = attr(x, "class"))
+  ans$d2 = gradientfunction(x, 0, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0
+  ans
+}

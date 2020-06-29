@@ -212,7 +212,8 @@ solveestpi0 = function(x, init, val, mix = NULL, tol = 1e-6, maxiter = 100, verb
   x = makeobject(x, pi0 = init, method = attr(x, "class"))
   r = computemixdist(x, mix = mix, maxiter = maxiter, tol = tol)
   d1 = r$ll + val
-  d2 = r$dd0 / (1 - init)
+  d = estpi0d(x, r$mix$pt, r$mix$pr)
+  d2 = d$d2; d3 = d$d3
   repeat{
     if (verbose){
       cat("Iteration", iter, "\n")
@@ -253,7 +254,12 @@ solveestpi0 = function(x, init, val, mix = NULL, tol = 1e-6, maxiter = 100, verb
       pos = min(pos, init)
     }
 
-    init = init - d1 / d2
+    if (is.null(d3)){
+      init = init - d1 * (1 - init) / d2;
+    }else{
+      init = init - 2 * d1 * d2 * (1 - init) / (2 * d2^2 - d1 * d3)
+    }
+
 
     if (init < neg | init > pos){
       init = (pos + neg) / 2
@@ -264,7 +270,8 @@ solveestpi0 = function(x, init, val, mix = NULL, tol = 1e-6, maxiter = 100, verb
     newmix = list(pt = r$mix$pt[!j0], pr = r$mix$pr[!j0] / sum(r$mix$pr[!j0]))
     r = computemixdist(x, mix = newmix, maxiter = maxiter, tol = tol)
     d1 = r$ll + val
-    d2 = r$dd0 / (1 - init)
+    d = estpi0d(x, r$mix$pt, r$mix$pr)
+    d2 = d$d2; d3 = d$d3
   }
 
   r

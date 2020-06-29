@@ -118,11 +118,18 @@ computemixdist.npnormllw = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ve
              mix = list(pt = r$pt, pr = r$pr),
              ll = nloss + sum(x$w) * log(x$h),
              beta = x$beta,
-             dd0 = gradientfunction(x, 0, mu0, pi0, order = c(1, 0, 0))$d0,
              h = x$h,
              convergence = convergence)
 
   attr(ans, "class") = "nspmix"
+  ans
+}
+
+estpi0d.npnormllw = function(x, mu0, pi0){
+  ans = vector("list", 2)
+  names(ans) = c("d2", "d3")
+  S = ddiscnorm(x$v, sd = x$beta, h = x$h) / dnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, h = x$h) - 1
+  ans$d2 = -sum(S * x$w); ans$d3 = sum(S^2 * x$w)
   ans
 }
 
@@ -140,7 +147,6 @@ estpi0.npnormllw = function(x, val = 0.5 * log(sum(x$w)), mix = NULL, tol = 1e-6
              max.gradient = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
              mix = list(pt = 0, pr = 1),
              ll = lossfunction(x, mu0 = 0, pi0 = 1) + sum(x$w) * log(x$h),
-             dd0 = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
              beta = x$beta,
              h = x$h,
              convergence = 0)

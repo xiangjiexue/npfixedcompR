@@ -103,7 +103,6 @@ computemixdist.npnormcll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ve
   }
 
   x$fn = function(mu0, pi0) dnpnormc(x$v, mu0, pi0, x$beta)
-
   pi0 = pi0 * (1 - sum(x$pi0))
 
   iter = 0; convergence = 0
@@ -154,7 +153,6 @@ computemixdist.npnormcll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ve
              mix = list(pt = r$pt, pr = r$pr),
              ll = nloss,
              beta = x$beta,
-             dd0 = gradientfunction(x, 0, mu0, pi0, order = c(1, 0, 0))$d0,
              convergence = convergence)
 
   attr(ans, "class") = "nspmix"

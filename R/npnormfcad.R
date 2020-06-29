@@ -137,10 +137,18 @@ computemixdist.npnormad = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
              mix = list(pt = r$pt, pr = r$pr),
              ll = nloss,
              beta = x$beta,
-             dd0 = gradientfunction(x, 0, mu0, pi0, order = c(1, 0, 0))$d0,
              convergence = convergence)
 
   attr(ans, "class") = "nspmix"
+  ans
+}
+
+estpi0d.npnormad = function(x, mu0, pi0){
+  ans = vector("list", 2)
+  names(ans) = c("d2", "d3")
+  S1 = pnorm(x$v, sd = x$beta) / pnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta) - 1
+  S2 = pnorm(x$v, sd = x$beta, lower.tail = FALSE) / pnpnorm(x$v, mu0, pi0, sd = x$beta, lower.tail = FALSE) - 1
+  ans$d2 = -sum(S1 * x$a1 + S2 * x$a2); ans$d3 = sum(S1^2 * x$a1 + S2^2 * x$a2)
   ans
 }
 
@@ -159,7 +167,6 @@ estpi0.npnormad = function(x, val = qAD(0.05, lower.tail = FALSE), mix = NULL, t
              mix = list(pt = 0, pr = 1),
              ll = lossfunction(x, mu0 = 0, pi0 = 1),
              beta = x$beta,
-             dd0 = gradientfunction(x, 0, 0, 1, order = c(1, 0, 0))$d0,
              convergence = 0)
   }else{
     r = solveestpi0(x = x, init = dnpnorm(0, mu0 = r0$mix$pt, pi0 = r0$mix$pr, sd = x$beta) * sqrt(2 * base::pi) * x$beta,
