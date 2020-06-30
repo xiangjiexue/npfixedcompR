@@ -41,14 +41,16 @@ gradientfunction.npnormllw = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
     temp = ddiscnorm(x$v, mean = murep, sd = x$beta, h = x$h) * sum(pi0)
     ans$d0 = .colSums((flexden - temp) / fullden * x$w, m = length(x$v), n = length(mu))
   }
+  if (any(order[2:3] == 1)){
+    temp2 = dnorm(x$v + x$h, murep, sd = x$beta)
+    temp = temp2 - dnorm(x$v, murep, sd = x$beta)
+  }
   if (order[2] == 1){
-    temp = dnorm(x$v + x$h, murep, sd = x$beta) - dnorm(x$v, murep, sd = x$beta)
     ans$d1 = .colSums(temp / fullden * x$w, m = length(x$v), n = length(mu)) * sum(pi0)
   }
   if (order[3] == 1){
-    temp = dnorm(x$v + x$h, murep, sd = x$beta) * (x$v - murep) -
-      dnorm(x$v, murep, sd = x$beta) * (x$v + x$h - murep)
-    ans$d2 = .colSums(temp / fullden * x$w, m = length(x$v), n = length(mu)) / x$beta^2
+    temp1 = temp2 * x$h + temp * (x$v - murep)
+    ans$d2 = .colSums(temp1 / fullden * x$w, m = length(x$v), n = length(mu)) / x$beta^2
   }
 
   ans
@@ -76,7 +78,7 @@ computemixdist.npnormllw = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ve
   points = gridpointsnpnorm(x)
 
   repeat{
-    mu0new = c(mu0, solvegradientmultiple(x, mu0, pi0, points, tol, method = "d1"))
+    mu0new = c(mu0, solvegradientmultiple(x, mu0, pi0, points, tol, method = "d2"))
     pi0new = c(pi0, rep(0, length.out = length(mu0new) - length(mu0)))
     sp = ddiscnorm(x$v, mean = rep(mu0new, rep(length(x$v), length(mu0new))), sd = x$beta, h = x$h)
     fp = .rowSums(sp[1:(length(x$v) * length(mu0))] * rep(pi0, rep(length(x$v), length(pi0))), m = length(x$v), n = length(pi0)) + x$precompute
