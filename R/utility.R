@@ -206,8 +206,9 @@ plotposteriormapping = function(x, result, result2 = NULL, ...){
     sapply(1:length(result2$mix$pr), function(ddd){
       lines(rep(result2$mix$pt[ddd], 2), 0.25 - c(0, result2$mix$pr[ddd] * 0.25), lwd = 3)
     })
-    dens2 = dnpnormc(d, mu0 = result2$mix$pt, pi0 = result2$mix$pr, n = ceiling((1 / result$beta)^2 + 3))
-    lines(d, 0.25 - dens / max(dens) * 0.25, col = "red", lwd = 2)
+    d2 = pmin(pmax(-0.95, seq(min(x), to = max(x), length = 1000)), 0.95)
+    dens2 = dnpnormc(d2, mu0 = result2$mix$pt, pi0 = result2$mix$pr, n = ceiling((1 / result$beta)^2 + 3))
+    lines(d2, 0.25 - dens2 / max(dens2) * 0.25, col = "red", lwd = 2)
     abline(h = 0.25, lwd = 0.5)
   }
 
