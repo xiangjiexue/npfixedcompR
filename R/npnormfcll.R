@@ -32,8 +32,8 @@ gradientfunction.npnormll = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
   }else{
     flexden = dnpnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta)
   }
-  murep = rep(mu, rep(length(x$v), length(mu)))
-  temp = dnorm(x$v, mean = murep, sd = x$beta) * sum(pi0)
+  murep = x$v - rep(mu, rep(length(x$v), length(mu)))
+  temp = dnorm(murep, sd = x$beta) * sum(pi0)
   fullden = flexden + x$precompute
   ans = vector("list", 3)
   names(ans) = c("d0", "d1", "d2")
@@ -41,14 +41,13 @@ gradientfunction.npnormll = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
     ans$d0 = .colSums((flexden - temp) / fullden, m = length(x$v), n = length(mu))
   }
   if (any(order[2:3] == 1)){
-    xminusmu = x$v - murep
     temp2 = temp / fullden
   }
   if (order[2] == 1){
-    ans$d1 = .colSums(temp2 * xminusmu, m = length(x$v), n = length(mu)) / -x$beta^2
+    ans$d1 = .colSums(temp2 * murep, m = length(x$v), n = length(mu)) / -x$beta^2
   }
   if (order[3] == 1){
-    ans$d2 = .colSums(temp2 * (xminusmu^2 - x$beta^2), m = length(x$v), n = length(mu)) / -x$beta^4
+    ans$d2 = .colSums(temp2 * (murep^2 - x$beta^2), m = length(x$v), n = length(mu)) / -x$beta^4
   }
 
   ans
@@ -59,7 +58,7 @@ computemixdist.npnormll = function(x, mix = NULL, tol = 1e-6, maxiter = 100, ver
   if (is.null(mix)){
     rx = range(x$v)
     breaks = pmax(ceiling(diff(rx) / (5 * x$beta)), 10)   # number of breaks
-    r = whist(x$v, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
+    r = hist(x$v, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
     r$density = pmax(0, r$density  / sum(r$density) - pnpnorm(r$breaks[-1], mu0 = x$mu0, pi0 = x$pi0, sd = x$beta) +
                        pnpnorm(r$breaks[-length(r$breaks)], mu0 = x$mu0, pi0 = x$pi0, sd = x$beta))
     mu0 = r$mids[r$density != 0]

@@ -89,6 +89,7 @@ solvegradientsingled2 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
   d1 = r$d1
   d2 = r$d2
   d = numeric(length(lower))
+  mflag = rep(FALSE, length(neg)) # There is no need to calculate the gradient function for mid-point again.
 
   index = rep(FALSE, length(neg))
   repeat{
@@ -96,21 +97,22 @@ solvegradientsingled2 = function(x, mu0, pi0, lower = min(x$v), upper = max(x$v)
       break
     index = abs(d1) < tol | pos - neg < tol
 
-    s = (pos + neg) / 2
-    d[!index] = gradientfunction(x, s[!index], mu0, pi0, order = c(0, 1, 0))$d1
+    if (sum(mflag) > 0){
+      s = (pos + neg) / 2
+      d[!index & mflag] = gradientfunction(x, s[!index & mflag], mu0, pi0, order = c(0, 1, 0))$d1
 
-    j0 = d < 0
-    neg[j0 & !index] = s[j0 & !index]
-    pos[!j0 & !index] = s[!j0 & !index]
+      j0 = d < 0
+      neg[j0 & !index & mflag] = s[j0 & !index & mflag]
+      pos[!j0 & !index & mflag] = s[!j0 & !index & mflag]
+    }
 
     j0 = d1 < 0
     neg[j0] = pmax(neg[j0], init[j0])
     pos[!j0] = pmin(pos[!j0], init[!j0])
 
     init[!index] = init[!index] - d1[!index] / d2[!index]
-    j0 = init > neg & init < pos
-    p = runif(1, min = 0.1, max = 0.9)
-    init[!index & !j0] =  p * pos[!index & !j0] + (1 - p) * neg[!index & !j0]
+    mflag = init < neg | init > pos
+    init[!index & mflag] = (pos[!index & mflag] + neg[!index & mflag]) / 2
 
     r = gradientfunction(x, init[!index], mu0, pi0, order = c(0, 1, 1))
     d1[!index] = r$d1
@@ -181,7 +183,7 @@ solvegradientmultiple = function(x, mu0, pi0, points, tol = 1e-6, method = "auto
   # the x object so that it pre-computes flexden to save some time.
   # the corresponding methods in gradidentfunction should have capacity for testing whether
   # there is a precompute value
-  # whether to precompute fullden remain a mistery
+  # whether to precompute fullden remain a mystery
   if (!is.null(x$fn))
     x$flexden = x$fn(mu0, pi0)
   switch(method,

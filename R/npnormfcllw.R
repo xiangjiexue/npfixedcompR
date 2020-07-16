@@ -34,22 +34,22 @@ gradientfunction.npnormllw = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
     flexden = dnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, h = x$h)
   }
   fullden = flexden + x$precompute
-  murep = rep(mu, rep(length(x$v), length(mu)))
+  murep = x$v - rep(mu, rep(length(x$v), length(mu)))
   ans = vector("list", 3)
   names(ans) = c("d0", "d1", "d2")
   if (order[1] == 1){
-    temp = ddiscnorm(x$v, mean = murep, sd = x$beta, h = x$h) * sum(pi0)
+    temp = ddiscnorm(murep, sd = x$beta, h = x$h) * sum(pi0)
     ans$d0 = .colSums((flexden - temp) / fullden * x$w, m = length(x$v), n = length(mu))
   }
   if (any(order[2:3] == 1)){
-    temp2 = dnorm(x$v + x$h, murep, sd = x$beta)
-    temp = temp2 - dnorm(x$v, murep, sd = x$beta)
+    temp2 = dnorm(x$h + murep, sd = x$beta)
+    temp = temp2 - dnorm(murep, sd = x$beta)
   }
   if (order[2] == 1){
     ans$d1 = .colSums(temp / fullden * x$w, m = length(x$v), n = length(mu)) * sum(pi0)
   }
   if (order[3] == 1){
-    temp1 = temp2 * x$h + temp * (x$v - murep)
+    temp1 = temp2 * x$h + temp * murep
     ans$d2 = .colSums(temp1 / fullden * x$w, m = length(x$v), n = length(mu)) / x$beta^2
   }
 

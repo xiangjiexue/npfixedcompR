@@ -35,22 +35,22 @@ gradientfunction.npnormcvmw = function(x, mu, mu0, pi0, order = c(1, 0, 0)){
   }else{
     flexden = pnpdiscnorm(x$v, mu0 = mu0, pi0 = pi0, sd = x$beta, h = x$h)
   }
-  murep = rep(mu, rep(length(x$v), length(mu)))
+  murep = x$v - rep(mu, rep(length(x$v), length(mu)))
   fullden = flexden - x$precompute
   ans = vector("list", 3)
   names(ans) = c("d0", "d1", "d2")
   if (order[1] == 1){
-    temp = pdiscnorm(x$v, mean = murep, sd = x$beta, h = x$h) * sum(pi0)
+    temp = pdiscnorm(murep, sd = x$beta, h = x$h) * sum(pi0)
     ans$d0 = .colSums((temp - flexden) * fullden * x$w, m = length(x$v), n = length(mu))
   }
   if (any(order[2:3] == 1)){
-    temp = dnorm(x$v + x$h, murep, sd = x$beta) * fullden * x$w
+    temp = dnorm(murep + x$h, sd = x$beta) * fullden * x$w
   }
   if (order[2] == 1){
     ans$d1 = .colSums(temp, m = length(x$v), n = length(mu)) * -2 * sum(pi0)
   }
   if (order[3] == 1){
-    ans$d2 = .colSums(temp * (x$v + x$h - murep), m = length(x$v), n = length(mu)) * -2 * sum(pi0)
+    ans$d2 = .colSums(temp * (x$h + murep), m = length(x$v), n = length(mu)) * -2 * sum(pi0)
   }
 
   ans

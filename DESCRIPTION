@@ -1,15 +1,15 @@
 Package: npfixedcompR
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9014
+Title: Non-parametric estimation of mixing distribution with possibily fixed components.
+Version: 0.0.0.9015
 Authors@R: 
     person(given = "Xiangjie",
            family = "Xue",
            role = c("aut", "cre"),
            email = "x.xue@auckland.ac.nz")
-Description: What the package does (one paragraph).
+Description: Non-parametric estimation of mixing distribution with possibly fixed components. 
 Imports: lsei (>= 1.2-0), goftest (>= 1.2-2), nloptr (>= 1.2.2.1)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
