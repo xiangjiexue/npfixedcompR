@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "x.xue@auckland.ac.nz")
 Description: Non-parametric estimation of mixing distribution with possibly fixed components. 
-Imports: lsei (>= 1.2-0), R6 (>= 2.4.1)
+Imports: lsei (>= 1.2-0), R6 (>= 2.4.1), goftest (>= 1.2-2), nloptr (>= 1.2.2.1)
 License: GPL-3
 Encoding: UTF-8
 LazyData: true

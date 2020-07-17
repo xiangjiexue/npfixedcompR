@@ -10,6 +10,7 @@
 #' @importFrom lsei pnnls pnnqp
 #' @importFrom goftest qCvM qAD
 #' @importFrom nloptr nloptr
+#' @importFrom R6 R6Class
 #' @name npfixedcompR
 NULL
 
@@ -118,44 +119,6 @@ whist = function(x, w=1, breaks="Sturges", plot=TRUE, freq=NULL,
             mids=breaks[-(ny+1)] + diff(breaks) * .5)
 }
 
-checklossfunction = function(x, mu0, pi0, eta, p, maxit = 100){
-  llorigin = lossfunction(x, mu0, pi0)
-  con = sum(p * eta)
-  sigma = 0.5; alpha = 1/3; u = -1;
-  repeat{
-    u = u + 1
-    pi0new = pi0 + sigma^u * eta
-    lhs = -lossfunction(x, mu0, pi0new)
-    rhs = -llorigin + alpha * sigma^u * con
-    if (lhs > rhs){
-      pi0 = pi0new
-      break
-    }
-    if (u + 1 > maxit)
-      break
-  }
-  index = order(mu0, decreasing = FALSE)
-  unique.disc(mu0[index], pi0[index])
-}
-
-collapsemix = function(x, mu0, pi0, tol = 1e-6){
-  ll = lossfunction(x, mu0, pi0)
-  ntol = max(tol * 0.1, ll * 1e-16)
-  repeat{
-    if (length(mu0) <= 1)
-      break
-    prec = c(10 * min(diff(mu0)))
-    r = unique.disc(mu0, pi0, c(prec, 0))
-    nll = lossfunction(x, r$pt, r$pr)
-    if (nll <= ll + ntol){
-      mu0 = r$pt; pi0 = r$pr
-    }else{
-      break
-    }
-  }
-  list(pt = mu0, pr = pi0)
-}
-
 #' Bin the continuous data.
 #'
 #' This function bins the continuous data using the equal-width bin in order to
@@ -178,4 +141,188 @@ bin = function(data, order = -5){
   t = table(data)
   index = t != 0
   list(v = as.numeric(names(t))[index], w = as.numeric(t)[index])
+}
+
+npfixedcompR = R6::R6Class("npfixedcompR",
+                       public = list(
+                         mu0fixed = 0,
+                         pi0fixed = 0,
+                         data = NULL,
+                         len = NULL,
+                         printmethodflag = function(){
+                           private$methodflag
+                         },
+                         printgridpoints = function(){
+                           if (is.null(private$gridpoints)){
+                             if (is.null(x$setgridpoints)){
+                               private$gridpoints = seq(from = min(self$data), to = max(self$data), length = 100)
+                             }else{
+                               self$setgridpoints()
+                             }
+                           }
+                           private$gridpoints
+                         },
+                         checklossfunction = function(mu0, pi0, eta, p, maxit = 100){
+                           llorigin = self$lossfunction(mu0, pi0)
+                           con = sum(p * eta)
+                           sigma = 0.5; alpha = 1/3; u = -1;
+                           repeat{
+                             u = u + 1
+                             pi0new = pi0 + sigma^u * eta
+                             lhs = -self$lossfunction(mu0, pi0new)
+                             rhs = -llorigin + alpha * sigma^u * con
+                             if (lhs > rhs){
+                               pi0 = pi0new
+                               break
+                             }
+                             if (u + 1 > maxit)
+                               break
+                           }
+                           index = order(mu0, decreasing = FALSE)
+                           unique.disc(mu0[index], pi0[index])
+                         },
+                         collapsemix = function(mu0, pi0, tol){
+                           ll = self$lossfunction(mu0, pi0)
+                           ntol = max(tol * 0.1, ll * 1e-16)
+                           repeat{
+                             if (length(mu0) <= 1)
+                               break
+                             prec = c(10 * min(diff(mu0)))
+                             r = unique.disc(mu0, pi0, c(prec, 0))
+                             nll = self$lossfunction(r$pt, r$pr)
+                             if (nll <= ll + ntol){
+                               mu0 = r$pt; pi0 = r$pr
+                             }else{
+                               break
+                             }
+                           }
+                           list(pt = mu0, pr = pi0)
+                         },
+                         compareattr = function(mu0, pi0){
+                           # move this to general constructor
+                           if (is.null(private$flexden)){
+                             TRUE
+                           }else{
+                             if (length(mu0) != length(attr(private$flexden, "mu0")) | length(pi0) != length(attr(private$flexden, "pi0"))){
+                               TRUE
+                             }else{
+                               sum((mu0 - attr(private$flexden, "mu0"))^2) > 1e-12 | sum((pi0 - attr(private$flexden, "pi0"))^2) > 1e-12
+                             }
+                           }
+                         },
+                         estpi0d = function(mu0, pi0){
+                           ans = vector("list", 2)
+                           names(ans) = c("d2", "d3")
+                           ans$d2 = x$gradientfunction(mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0
+                           ans
+                         }
+                       ),
+                       private = list(
+                         gridpoints = NULL
+                       ))
+
+#' This is a S3 generic function for computing non-parametric mixing distribution
+#'
+#' The full list of implemented family is in \code{\link{makeobject}}.
+#'
+#' @title Computing non-parametric mixing distribution
+#' @param x a object from implemented family generated by \code{\link{makeobject}}.
+#' @param mix initial mixing distribution (proper)
+#' @param tol tolerance to stop the code
+#' @param maxiter maximum iteration to stop the code
+#' @param verbose logical. If TRUE, the intermediate results will be printed.
+#' @examples
+#' data = rnorm(500, c(0, 2))
+#' x = makeobject(data, method = "npnormll")
+#' computemixdist(x)
+#' x = makeobject(data, method = "npnormcvm")
+#' computemixdist(x)
+#' @export
+computemixdist = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
+  UseMethod("computemixdist")
+}
+
+#' @export
+computemixdist.npfixedcompR = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
+  if (is.null(mix)){
+    if (is.null(x$w)) {w = 1} else {w = x$w}
+    r = whist(x$data, w, breaks = x$printgridpoints(), probability = TRUE, plot = FALSE, warn.unused = FALSE)
+    r$density = pmax(0, r$density  / sum(r$density) - pnpnorm(r$breaks[-1], mu0 = x$mu0fixed, pi0 = x$pi0fixed, sd = x$beta) +
+                       pnpnorm(r$breaks[-length(r$breaks)], mu0 = x$mu0fixed, pi0 = x$pi0fixed, sd = x$beta))
+    mu0 = r$mids[r$density != 0]
+    pi0 = r$density[r$density != 0] / sum(r$density)
+  }else{
+    mu0 = mix$pt; pi0 = mix$pr
+  }
+  pi0 = pi0 * (1 - sum(x$pi0fixed))
+  iter = 0; convergence = 0
+  closs = x$lossfunction(mu0, pi0)
+
+  repeat{
+    r = x$computeweights(mu0, pi0, solvegradientmultiple(x, mu0, pi0), tol = tol)
+    mu0 = r$pt; pi0 = r$pr
+    iter = iter + 1
+    nloss = x$lossfunction(mu0, pi0)
+
+    if (verbose){
+      cat("Iteration: ", iter, "\n")
+      cat(paste0("Support Point ", round(r$pt, -ceiling(log10(tol))), " with probability ", round(r$pr, -ceiling(log10(tol))), "\n"))
+      cat("Current log-likelihood ", as.character(round(-nloss, -ceiling(log10(tol)))), "\n")
+    }
+
+    if (closs - nloss < tol){
+      convergence = 0
+      break
+    }
+
+    if (iter > maxiter){
+      convergence = 1
+      break
+    }
+    closs = nloss
+  }
+
+  mu0new = c(mu0, x$mu0fixed); pi0new = c(pi0, x$pi0fixed)
+  index = order(mu0new, decreasing = FALSE)
+  r = unique.disc(mu0new[index], pi0new[index])
+
+  ans = list(iter = iter,
+             family = "npnorm",
+             max.gradient = min(x$gradientfunction(mu0, mu0, pi0, order = c(1, 0, 0))$d0),
+             mix = list(pt = r$pt, pr = r$pr),
+             ll = nloss,
+             beta = x$beta,
+             convergence = convergence)
+
+  attr(ans, "class") = "nspmix"
+  ans
+}
+
+#' computing non-parametric mixing distribution with estimated proportion at 0
+#'
+#' This is a S3 generic function for computing non-parametric mixing
+#' distribution with estimated proportion at 0. Different families will
+#' have different threshold values.
+#'
+#' The full list of implemented family is in \code{\link{makeobject}}.
+#'
+#' @title Computing non-parametric mixing distribution with estimated proportion at 0
+#' @param x a object from implemented family
+#' @param val the threshold value.
+#' @param mix initial mixing distribution (proper)
+#' @param tol tolerance to stop the code
+#' @param maxiter maximum iteration to stop the code
+#' @param verbose logical. If TRUE, the intermediate results will be printed.
+#' @param ... parameters passed to the specific method.
+#' @examples
+#' data = rnorm(500, c(0, 2))
+#' pi0 = 0.5
+#' x = makeobject(data, method = "npnormll")
+#' estpi0(x)
+#' x = makeobject(data, method = "npnormcvm")
+#' estpi0(x)
+#' @export
+estpi0 = function(x, ...){
+  f = match.fun(paste0("estpi0.", x$type))
+  f(x = x, ...)
 }

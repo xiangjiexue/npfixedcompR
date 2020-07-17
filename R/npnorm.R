@@ -133,17 +133,23 @@ pnpdiscnorm = function(x, mu0 = 0, pi0 = 0, sd = 1, h = 1, lower.tail = TRUE, lo
   pnpnorm1(x + h, mu0 = mu0, pi0 = pi0, sd = sd, lower.tail = lower.tail, log.p = log.p)
 }
 
-gridpointsnpnorm = function(x, grid=100) {
-  rx = range(x$v)
-  breaks = pmax(ceiling(diff(rx) / (5*x$beta)), 5)   # number of breaks
-  if (is.null(x$w)) {w = rep(1, length(x$v))} else {w = x$w}
-  r = whist(x$v, w, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
-  i = r$density != 0
-  i = i | c(i[-1],FALSE) | c(FALSE,i[-length(i)])  # include neighbours
-  m = sum(i)
-  k = pmax(ceiling(grid / m), 10)           # at least 10 in each interval
-  d = r$breaks[2] - r$breaks[1]
-  s = r$breaks[-length(r$breaks)][i]
-  sort(c(rx[1], rep(s, rep(k,m)) + d * (1:k-0.5)/k, rx[2]), decreasing = FALSE)
-}
+npnorm = R6::R6Class("npnorm",
+                 inherit = npfixedcompR,
+                 public = list(
+                   setgridpoints = function(grid=100) {
+                     rx = range(self$data)
+                     breaks = pmax(ceiling(diff(rx) / (5*self$beta)), 5)   # number of breaks
+                     if (is.null(self$w)) {w = 1} else {w = self$w}
+                     r = whist(self$data, w, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
+                     i = r$density != 0
+                     i = i | c(i[-1],FALSE) | c(FALSE,i[-length(i)])  # include neighbours
+                     m = sum(i)
+                     k = pmax(ceiling(grid / m), 10)           # at least 10 in each interval
+                     d = r$breaks[2] - r$breaks[1]
+                     s = r$breaks[-length(r$breaks)][i]
+                     private$gridpoints = sort(c(rx[1], rep(s, rep(k,m)) + d * (1:k-0.5)/k, rx[2]), decreasing = FALSE)
+                   }
+                 ))
+
+
 
