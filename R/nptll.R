@@ -132,7 +132,7 @@ nptll = R6::R6Class("nptll",
                         S = sp / fp
                         a = 2 - private$precompute / fp
                         nw = pnnls(S, a, sum = 1 - sum(self$pi0fixed))$x
-                        r = self$checklossfunction(mu0new, pi0new, nw - pi0new, colSums(S), tol)
+                        r = self$checklossfunction(mu0new, pi0new, nw - pi0new, colSums(S))
                         self$collapsemix(r$pt, r$pr, tol)
                       },
                       estpi0dS = function(){

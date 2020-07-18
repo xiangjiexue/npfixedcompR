@@ -108,7 +108,7 @@ npnormcvm = R6::R6Class("npnormcvm",
                        private = list(
                          precompute = NULL,
                          flexden = NULL,
-                         mflag = "d2",
+                         mflag = "d1",
                          S1 = NULL
                        ))
 

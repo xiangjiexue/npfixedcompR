@@ -112,7 +112,7 @@ npnormll = R6::R6Class("npnormll",
                    private = list(
                      precompute = NULL,
                      flexden = NULL,
-                     mflag = "d2",
+                     mflag = "d1",
                      S1 = NULL
                    ))
 
