@@ -1,8 +1,8 @@
-npnormcvm = R6::R6Class("npnormcv,",
+npnormcvm = R6::R6Class("npnormcvm",
                        inherit = npnorm,
                        public = list(
                          beta = 1,
-                         type = "npnormcvm",
+                         type = "npnorm",
                          initialize = function(data, mu0, pi0, beta){
                            self$data = sort(data, decreasing = FALSE)
                            self$len = length(data)
@@ -97,7 +97,7 @@ estpi0.npnormcvm = function(x, val = qCvM(0.5, lower.tail = FALSE), mix = NULL, 
 
   if (r1$ll + 1/ 12 / x$len < val){
     r = list(iter = 0,
-             family = "npnorm",
+             family = x$type,
              max.gradient = x$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
              mix = list(pt = 0, pr = 1),
              ll = x$lossfunction(mu0 = 0, pi0 = 1),

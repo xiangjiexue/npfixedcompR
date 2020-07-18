@@ -4,7 +4,7 @@
 \alias{solvegradientmultiple}
 \title{computing the support points}
 \usage{
-solvegradientmultiple(x, mu0, pi0, points, tol = 1e-06, method = "auto")
+solvegradientmultiple(x, mu0, pi0, points, tol = 1e-06)
 }
 \arguments{
 \item{x}{a object from implemented family}
@@ -16,11 +16,6 @@ solvegradientmultiple(x, mu0, pi0, points, tol = 1e-06, method = "auto")
 \item{points}{given grid points for finding the local minima (if exists)}
 
 \item{tol}{tolerance}
-
-\item{method}{the character strings specifying which algorithm to use. \code{method = "auto"} choose
-the algorithm automatically, \code{method = "d0"} chooses the derivative-free minimisation,
-\code{method = "d1"} chooses the derivative-free root-finding and \code{method = "d2"} chooses the
-first-order root-finding.}
 }
 \description{
 This function is used for finding the support points by finding the local minima.

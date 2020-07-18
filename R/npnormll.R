@@ -2,7 +2,7 @@ npnormll = R6::R6Class("npnormll",
                    inherit = npnorm,
                    public = list(
                      beta = 1,
-                     type = "npnormll",
+                     type = "npnorm",
                      initialize = function(data, mu0, pi0, beta){
                         self$data = data
                         self$len = length(data)
@@ -92,7 +92,7 @@ makeobject.npnormll = function(v, mu0, pi0, beta){
 
 #' @rdname estpi0
 #' @export
-estpi0.npnormll = function(x, val = 0.5 * log(x$len), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
+estpi0.npnormll = function(x, val = -log(0.5), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   x$modified(pi0 = 1 - tol / 2)
   r1 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
   x$modified(pi0 = 0)
@@ -100,7 +100,7 @@ estpi0.npnormll = function(x, val = 0.5 * log(x$len), mix = NULL, tol = 1e-6, ma
 
   if (r1$ll - r0$ll < val){
     r = list(iter = 0,
-             family = "npnorm",
+             family = x$type,
              max.gradient = x$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
              mix = list(pt = 0, pr = 1),
              beta = x$beta,

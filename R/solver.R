@@ -72,7 +72,7 @@ solvegradientmultipled0 = function(x, mu0, pi0, points, tol = 1e-6){
   index = seq(1, by = 1, length = length(points) - 1)[pointsval[-length(pointsval)] < 0 & pointsval[-1] > 0]
   if (length(index) >= 1){
     r = sapply(index, function(ddd){
-      solvegradientsingled0(x = x, mu0 = mu0, pi0 = pi0, lower = points[ddd], upper = points[ddd + 1], tol)
+      solvegradientsingled0(x = x, mu0 = mu0, pi0 = pi0, lower = points[ddd], upper = points[ddd + 2], tol)
     })
     r = c(points[1], r, points[length(points)])
     r = r[x$gradientfunction(mu = r, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
@@ -173,12 +173,8 @@ solvegradientmultipled2 = function(x, mu0, pi0, points, tol = 1e-6){
 #' @param pi0 a vector of weights corresponding to the support points
 #' @param points given grid points for finding the local minima (if exists)
 #' @param tol tolerance
-#' @param method the character strings specifying which algorithm to use. \code{method = "auto"} choose
-#' the algorithm automatically, \code{method = "d0"} chooses the derivative-free minimisation,
-#' \code{method = "d1"} chooses the derivative-free root-finding and \code{method = "d2"} chooses the
-#' first-order root-finding.
 #' @author Xiangjie Xue
-solvegradientmultiple = function(x, mu0, pi0, points, tol = 1e-6, method = "auto"){
+solvegradientmultiple = function(x, mu0, pi0, points, tol = 1e-6){
   # Here mu0 and pi0 is always fixed. since R has a copying sematics, we can modify
   # the x object so that it pre-computes flexden to save some time.
   # the corresponding methods in gradidentfunction should have capacity for testing whether

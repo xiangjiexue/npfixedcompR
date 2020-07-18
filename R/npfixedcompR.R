@@ -237,6 +237,8 @@ npfixedcompR = R6::R6Class("npfixedcompR",
 #' computemixdist(x)
 #' x = makeobject(data, method = "npnormcvm")
 #' computemixdist(x)
+#' x = makeobject(data, method = "npnormad")
+#' computemixdist(x)
 #' @export
 computemixdist = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   UseMethod("computemixdist")
@@ -245,15 +247,9 @@ computemixdist = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FA
 #' @export
 computemixdist.npfixedcompR = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
   if (is.null(mix)){
-    if (is.null(x$w)) {w = 1} else {w = x$w}
-    r = whist(x$data, w, breaks = x$printgridpoints(), probability = TRUE, plot = FALSE, warn.unused = FALSE)
-    r$density = pmax(0, r$density  / sum(r$density) - pnpnorm(r$breaks[-1], mu0 = x$mu0fixed, pi0 = x$pi0fixed, sd = x$beta) +
-                       pnpnorm(r$breaks[-length(r$breaks)], mu0 = x$mu0fixed, pi0 = x$pi0fixed, sd = x$beta))
-    mu0 = r$mids[r$density != 0]
-    pi0 = r$density[r$density != 0] / sum(r$density)
-  }else{
-    mu0 = mix$pt; pi0 = mix$pr
+    mix = x$initpoints()
   }
+  mu0 = mix$pt; pi0 = mix$pr
   pi0 = pi0 * (1 - sum(x$pi0fixed))
   iter = 0; convergence = 0
   closs = x$lossfunction(mu0, pi0)
@@ -287,7 +283,7 @@ computemixdist.npfixedcompR = function(x, mix = NULL, tol = 1e-6, maxiter = 100,
   r = unique.disc(mu0new[index], pi0new[index])
 
   ans = list(iter = iter,
-             family = "npnorm",
+             family = x$type,
              max.gradient = min(x$gradientfunction(mu0, mu0, pi0, order = c(1, 0, 0))$d0),
              mix = list(pt = r$pt, pr = r$pr),
              ll = nloss,
@@ -321,8 +317,10 @@ computemixdist.npfixedcompR = function(x, mix = NULL, tol = 1e-6, maxiter = 100,
 #' estpi0(x)
 #' x = makeobject(data, method = "npnormcvm")
 #' estpi0(x)
+#' x = makeobject(data, method = "npnormad")
+#' estpi0(x)
 #' @export
 estpi0 = function(x, ...){
-  f = match.fun(paste0("estpi0.", x$type))
+  f = match.fun(paste0("estpi0.", class(x)[1]))
   f(x = x, ...)
 }

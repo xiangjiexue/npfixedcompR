@@ -29,4 +29,6 @@ x = makeobject(data, method = "npnormll")
 computemixdist(x)
 x = makeobject(data, method = "npnormcvm")
 computemixdist(x)
+x = makeobject(data, method = "npnormad")
+computemixdist(x)
 }
