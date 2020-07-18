@@ -106,7 +106,7 @@ nptll = R6::R6Class("nptll",
                         attr(private$flexden, "pi0") = pi0
                       },
                       gradientfunction = function(mu, mu0, pi0, order = c(1, 0, 0)){
-                        if (self$compareattr(mu0, pi0)){
+                        if (any(self$compareattr(mu0, pi0))){
                           self$setflexden(mu0, pi0)
                         }
                         temp = dt(self$data, ncp = rep(mu, rep(self$len, length(mu))), df = self$beta) * sum(pi0)
@@ -144,12 +144,34 @@ nptll = R6::R6Class("nptll",
                         S = private$S1 / dnpt(self$data, mu0 = mu0, pi0 = pi0, df = self$beta) - 1
                         ans$d2 = -sum(S); ans$d3 = sum(S^2)
                         ans
+                      },
+                      estpi0 = function(val = -log(0.5), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
+                        self$modified(pi0 = 1 - tol / 2)
+                        self$computemixdist(mix = mix, tol = tol, maxiter = maxiter)
+                        r1ll = self$result$ll
+                        self$modified(pi0 = 0)
+                        self$computemixdist(mix = mix, tol = tol, maxiter = maxiter)
+                        r0ll = self$result$ll
+
+                        if (r1ll - r0ll < val){
+                          r = list(iter = 0,
+                                   family = self$type,
+                                   max.gradient = self$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
+                                   mix = list(pt = 0, pr = 1),
+                                   beta = self$beta,
+                                   ll = self$lossfunction(mu0 = 0, pi0 = 1),
+                                   convergence = 0)
+                        }else{
+                          self$estpi0dS()
+                          private$solveestpi0(init = dnpt(0, mu0 = self$result$mix$pt, pi0 = self$result$mix$pr, df = self$beta) / dt(0, df = self$beta),
+                                           val = -r0ll - val, tol = tol, maxiter = maxiter, verbose = verbose)
+                        }
                       }
                     ),
                     private = list(
                       precompute = NULL,
                       flexden = NULL,
-                      methodflag = "d0",
+                      mflag = "d0",
                       S1 = NULL
                     ))
 
@@ -157,29 +179,4 @@ nptll = R6::R6Class("nptll",
 #' @export
 makeobject.nptll = function(v, mu0, pi0, beta){
   nptll$new(v, mu0, pi0, beta)
-}
-
-#' @rdname estpi0
-#' @export
-estpi0.nptll = function(x, val = -log(0.5), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
-  x$modified(pi0 = 1 - tol / 2)
-  r1 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
-  x$modified(pi0 = 0)
-  r0 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
-
-  if (r1$ll - r0$ll < val){
-    r = list(iter = 0,
-             family = x$type,
-             max.gradient = x$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
-             mix = list(pt = 0, pr = 1),
-             beta = x$beta,
-             ll = x$lossfunction(mu0 = 0, pi0 = 1),
-             convergence = 0)
-  }else{
-    x$estpi0dS()
-    r = solveestpi0(x = x, init = dnpt(0, mu0 = r0$mix$pt, pi0 = r0$mix$pr, df = x$beta) / dt(0, df = x$beta),
-                    val = -r0$ll - val, mix = r0$mix, tol = tol, maxiter = maxiter, verbose = verbose)
-  }
-
-  r
 }

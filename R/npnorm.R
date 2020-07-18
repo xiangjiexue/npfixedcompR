@@ -151,7 +151,8 @@ npnorm = R6::R6Class("npnorm",
                    },
                    initpoints = function(){
                      if (is.null(self$w)) {w = 1} else {w = self$w}
-                     r = whist(self$data, w, breaks = self$printgridpoints(), probability = TRUE, plot = FALSE, warn.unused = FALSE)
+                     breaks = pmax(ceiling(diff(range(self$data))/(5 * self$beta)), 5)
+                     r = whist(self$data, w, breaks = breaks, freq = FALSE, plot = FALSE)
                      r$density = pmax(0, r$density  / sum(r$density) - pnpnorm(r$breaks[-1], mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta) +
                                         pnpnorm(r$breaks[-length(r$breaks)], mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta))
                      list(pt = r$mids[r$density != 0], pr = r$density[r$density != 0] / sum(r$density))

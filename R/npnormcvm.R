@@ -82,12 +82,33 @@ npnormcvm = R6::R6Class("npnormcvm",
                            S = private$S1$a1 - pn
                            ans$d2 = 2 * sum(S * (pn - private$S1$a2)); ans$d3 = 2 * sum(S^2)
                            ans
+                         },
+                         estpi0 = function(val = qCvM(0.5, lower.tail = FALSE), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
+                           self$modified(pi0 = 1 - tol / 2)
+                           self$computemixdist(mix = mix, tol = tol, maxiter = maxiter)
+                           r1ll = self$result$ll
+                           self$modified(pi0 = 0)
+                           self$computemixdist(mix = mix, tol = tol, maxiter = maxiter)
+
+                           if (r1ll + 1/ 12 / self$len < val){
+                             r = list(iter = 0,
+                                      family = self$type,
+                                      max.gradient = self$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
+                                      mix = list(pt = 0, pr = 1),
+                                      ll = self$lossfunction(mu0 = 0, pi0 = 1),
+                                      beta = self$beta,
+                                      convergence = 0)
+                           }else{
+                             self$estpi0dS()
+                             private$solveestpi0(init = dnpnorm(0, mu0 = self$result$mix$pt, pi0 = self$result$mix$pr, sd = self$beta) * sqrt(2 * base::pi) * self$beta,
+                                                 val = 1 / 12 / self$len - val, tol = tol, maxiter = maxiter, verbose = verbose)
+                           }
                          }
                        ),
                        private = list(
                          precompute = NULL,
                          flexden = NULL,
-                         methodflag = "d2",
+                         mflag = "d2",
                          S1 = NULL
                        ))
 
@@ -97,27 +118,4 @@ makeobject.npnormcvm = function(v, mu0, pi0, beta){
   npnormcvm$new(v, mu0, pi0, beta)
 }
 
-#' @rdname estpi0
-#' @export
-estpi0.npnormcvm = function(x, val = qCvM(0.5, lower.tail = FALSE), mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
-  x$modified(pi0 = 1 - tol / 2)
-  r1 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
-  x$modified(pi0 = 0)
-  r0 = computemixdist(x, mix = mix, tol = tol, maxiter = maxiter)
 
-  if (r1$ll + 1/ 12 / x$len < val){
-    r = list(iter = 0,
-             family = x$type,
-             max.gradient = x$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
-             mix = list(pt = 0, pr = 1),
-             ll = x$lossfunction(mu0 = 0, pi0 = 1),
-             beta = x$beta,
-             convergence = 0)
-  }else{
-    x$estpi0dS()
-    r = solveestpi0(x = x, init = dnpnorm(0, mu0 = r0$mix$pt, pi0 = r0$mix$pr, sd = x$beta) * sqrt(2 * base::pi) * x$beta,
-                    val = 1/ 12 / x$len - val, mix = r0$mix, tol = tol, maxiter = maxiter, verbose = verbose)
-  }
-
-  r
-}

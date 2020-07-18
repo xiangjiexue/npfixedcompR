@@ -1,6 +1,6 @@
 Package: npfixedcompR
 Title: Non-parametric estimation of mixing distribution with possibily fixed components
-Version: 0.0.1.0003
+Version: 0.0.1.0004
 Authors@R: 
     person(given = "Xiangjie",
            family = "Xue",
