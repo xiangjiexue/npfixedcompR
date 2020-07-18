@@ -81,4 +81,6 @@ x = makeobject(data, method = "npnormcvm")
 estpi0(x)
 x = makeobject(data, method = "npnormad")
 estpi0(x)
+x = makeobject(data, method = "nptll")
+estpi0(x)
 }

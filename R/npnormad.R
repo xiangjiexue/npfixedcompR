@@ -27,12 +27,22 @@ npnormad = R6::R6Class("npnormad",
                            private$precompute$precompute2 = pnpnorm(self$data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta, lower.tail = FALSE)
                          },
                          lossfunction = function(mu0, pi0){
-                           temp = pnpnorm(self$data, mu0, pi0, self$beta) + private$precompute$precompute1
-                           -sum(log(temp) * private$precompute$a1 + log1p(-temp) * private$precompute$a2)
+                           if (any(self$compareattr(mu0, pi0))){
+                             self$setflexden(mu0, pi0)
+                           }
+                           -sum(log(private$flexden$fullden) * private$precompute$a1 +
+                                  log(private$flexden$fullden2) * private$precompute$a2)
                          },
                          setflexden = function(mu0, pi0){
-                           temp = pnpnorm(self$data, mu0 = mu0, pi0 = pi0, sd = self$beta)
-                           temp2 = pnpnorm(self$data, mu0 = mu0, pi0 = pi0, sd = self$beta, lower.tail = FALSE)
+                           r = self$compareattr(mu0, pi0)
+                           if (r[1]){
+                             private$flexden$dens = pnorm(self$data, mean = rep(mu0, rep(self$len, length(mu0))), sd = self$beta)
+                             dim(private$flexden$dens) = c(self$len, length(mu0))
+                             private$flexden$dens2 = pnorm(self$data, mean = rep(mu0, rep(self$len, length(mu0))), sd = self$beta, lower.tail = FALSE)
+                             dim(private$flexden$dens2) = c(self$len, length(mu0))
+                           }
+                           temp = drop(private$flexden$dens %*% pi0)
+                           temp2 = drop(private$flexden$dens2 %*% pi0)
                            private$flexden$flexden = temp
                            private$flexden$fullden = temp + private$precompute$precompute1
                            private$flexden$flexden2 = temp2
@@ -44,7 +54,7 @@ npnormad = R6::R6Class("npnormad",
                            attr(private$flexden, "pi0") = pi0
                          },
                          gradientfunction = function(mu, mu0, pi0, order = c(1, 0, 0)){
-                           if (self$compareattr(mu0, pi0)){
+                           if (any(self$compareattr(mu0, pi0))){
                              self$setflexden(mu0, pi0)
                            }
                            murep = self$data - rep(mu, rep(self$len, length(mu)))
@@ -69,17 +79,18 @@ npnormad = R6::R6Class("npnormad",
                            ans
                          },
                          computeweights = function(mu0, pi0, newweights, tol = 1e-6){
+                           if (any(self$compareattr(mu0, pi0))){
+                             self$setflexden(mu0, pi0)
+                           }
                            mu0new = c(mu0, newweights)
                            pi0new = c(pi0, rep(0, length(newweights)))
-                           sf = pnorm(self$data, mean = rep(mu0new, rep(self$len, length(mu0new))), sd = self$beta)
-                           ss = .rowSums(sf[1:(self$len * length(mu0))] * rep(pi0, rep(self$len, length(pi0))), m = self$len, n = length(pi0)) + private$precompute$precompute1
+                           sf = cbind(private$flexden$dens, matrix(pnorm(self$data, mean = rep(newweights, rep(self$len, length(newweights))), sd = self$beta), nrow = self$len, ncol = length(newweights)))
+                           ss = private$flexden$fullden
                            S = sf / ss
-                           dim(S) = c(self$len, length(pi0new))
 
-                           uf = pnorm(self$data, mean = rep(mu0new, rep(self$len, length(mu0new))), sd = self$beta, lower.tail = FALSE)
-                           us = .rowSums(uf[1:(self$len * length(mu0))] * rep(pi0, rep(self$len, length(pi0))), m = self$len, n = length(pi0)) + private$precompute$precompute2
+                           uf = cbind(private$flexden$dens2, matrix(pnorm(self$data, mean = rep(newweights, rep(self$len, length(newweights))), sd = self$beta, lower.tail = FALSE), nrow = self$len, ncol = length(newweights)))
+                           us = private$flexden$fullden2
                            U = uf / us
-                           dim(U) = c(self$len, length(pi0new))
 
                            Sma1 = S * private$precompute$a1
                            Uma2 = U * private$precompute$a2

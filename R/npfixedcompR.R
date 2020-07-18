@@ -201,13 +201,20 @@ npfixedcompR = R6::R6Class("npfixedcompR",
                          compareattr = function(mu0, pi0){
                            # move this to general constructor
                            if (is.null(private$flexden)){
-                             TRUE
+                             c(TRUE, TRUE)
                            }else{
-                             if (length(mu0) != length(attr(private$flexden, "mu0")) | length(pi0) != length(attr(private$flexden, "pi0"))){
-                               TRUE
+                             ans = c(FALSE, FALSE)
+                             if (length(mu0) != length(attr(private$flexden, "mu0"))){
+                               ans = ans | c(TRUE, FALSE)
                              }else{
-                               sum((mu0 - attr(private$flexden, "mu0"))^2) > 1e-12 | sum((pi0 - attr(private$flexden, "pi0"))^2) > 1e-12
+                               ans = ans | c(sum((mu0 - attr(private$flexden, "mu0"))^2) > 1e-12, FALSE)
                              }
+                             if (length(pi0) != length(attr(private$flexden, "pi0"))){
+                               ans = ans | c(FALSE, TRUE)
+                             }else{
+                               ans = ans | c(FALSE, sum((pi0 - attr(private$flexden, "pi0"))^2) > 1e-12)
+                             }
+                             ans
                            }
                          },
                          estpi0d = function(mu0, pi0){
@@ -238,6 +245,8 @@ npfixedcompR = R6::R6Class("npfixedcompR",
 #' x = makeobject(data, method = "npnormcvm")
 #' computemixdist(x)
 #' x = makeobject(data, method = "npnormad")
+#' computemixdist(x)
+#' x = makeobject(data, method = "nptll")
 #' computemixdist(x)
 #' @export
 computemixdist = function(x, mix = NULL, tol = 1e-6, maxiter = 100, verbose = FALSE){
@@ -318,6 +327,8 @@ computemixdist.npfixedcompR = function(x, mix = NULL, tol = 1e-6, maxiter = 100,
 #' x = makeobject(data, method = "npnormcvm")
 #' estpi0(x)
 #' x = makeobject(data, method = "npnormad")
+#' estpi0(x)
+#' x = makeobject(data, method = "nptll")
 #' estpi0(x)
 #' @export
 estpi0 = function(x, ...){

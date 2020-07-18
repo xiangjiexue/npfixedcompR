@@ -88,10 +88,18 @@ nptll = R6::R6Class("nptll",
                         private$precompute = dnpt(data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, df = self$beta)
                       },
                       lossfunction = function(mu0, pi0){
-                        -sum(log(dnpt(self$data, mu0 = mu0, pi0 = pi0, df = self$beta) + private$precompute))
+                        if (any(self$compareattr(mu0, pi0))){
+                          self$setflexden(mu0, pi0)
+                        }
+                        -sum(log(private$flexden$fullden))
                       },
                       setflexden = function(mu0, pi0){
-                        temp = dnpt(self$data, mu0, pi0, self$beta)
+                        r = self$compareattr(mu0, pi0)
+                        if (r[1]){
+                          private$flexden$dens = dt(self$data, ncp = rep(mu0, rep(self$len, length(mu0))), df = self$beta)
+                          dim(private$flexden$dens) = c(self$len, length(mu0))
+                        }
+                        temp = drop(private$flexden$dens %*% pi0)
                         private$flexden$flexden = temp
                         private$flexden$fullden = temp + private$precompute
                         attr(private$flexden, "mu0") = mu0
@@ -114,12 +122,14 @@ nptll = R6::R6Class("nptll",
                         ans
                       },
                       computeweights = function(mu0, pi0, newweights, tol = 1e-6){
+                        if (any(self$compareattr(mu0, pi0))){
+                          self$setflexden(mu0, pi0)
+                        }
                         mu0new = c(mu0, newweights)
                         pi0new = c(pi0, rep(0, length(newweights)))
-                        sp = dt(self$data, ncp = rep(mu0new, rep(self$len, length(mu0new))), df = self$beta)
-                        fp = .rowSums(sp[1:(self$len * length(mu0))] * rep(pi0, rep(self$len, length(pi0))), m = self$len, n = length(pi0)) + private$precompute
+                        sp = cbind(private$flexden$dens, matrix(dt(self$data, ncp = rep(newweights, rep(self$len, length(newweights))), df = self$beta), nrow = self$len, ncol = length(newweights)))
+                        fp = private$flexden$fullden
                         S = sp / fp
-                        dim(S) = c(self$len, length(pi0new))
                         a = 2 - private$precompute / fp
                         nw = pnnls(S, a, sum = 1 - sum(self$pi0fixed))$x
                         r = self$checklossfunction(mu0new, pi0new, nw - pi0new, colSums(S), tol)
