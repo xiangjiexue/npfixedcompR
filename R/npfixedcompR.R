@@ -512,6 +512,10 @@ npfixedcompR = R6::R6Class("npfixedcompR",
 #' pi0 = 0.5
 #' x = makeobject(data, method = "npnormll")
 #' estpi0(x)
+#' x = makeobject(data, method = "npnormllw")
+#' estpi0(x)
+#' x = makeobject(data, method = "npnormcvm")
+#' estpi0(x)
 #' x = makeobject(data, method = "npnormcvm")
 #' estpi0(x)
 #' x = makeobject(data, method = "npnormad")
@@ -548,7 +552,11 @@ estpi0 = function(x, ...){
 #' pi0 = 0.5
 #' x = makeobject(data, pi0 = pi0, method = "npnormll")
 #' computemixdist(x)
+#' x = makeobject(data, pi0 = pi0, method = "npnormllw")
+#' computemixdist(x)
 #' x = makeobject(data, pi0 = pi0, method = "npnormcvm")
+#' computemixdist(x)
+#' x = makeobject(data, pi0 = pi0, method = "npnormcvmw")
 #' computemixdist(x)
 #' x = makeobject(data, pi0 = pi0, method = "npnormad")
 #' computemixdist(x)
