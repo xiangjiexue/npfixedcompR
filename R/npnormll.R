@@ -102,7 +102,7 @@ npnormll = R6::R6Class("npnormll",
 
                        if (r1ll - r0ll < val){
                          self$result = list(iter = 0,
-                                  family = x$type,
+                                  family = self$type,
                                   max.gradient = self$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
                                   mix = list(pt = 0, pr = 1),
                                   beta = self$beta,

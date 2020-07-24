@@ -14,7 +14,7 @@
 \alias{makeobject.nptll}
 \title{Making object for computation}
 \usage{
-makeobject(v, method = "npnormll", order = -3, ...)
+makeobject(v, method = "npnormll", ...)
 
 makeobject.npnormad(v, mu0, pi0, beta, order)
 
@@ -37,8 +37,6 @@ makeobject.nptll(v, mu0, pi0, beta, order)
 
 \item{method}{An implemented family; see details}
 
-\item{order}{the parameter for the binned version.}
-
 \item{...}{other parameter passed to the constructor.}
 
 \item{mu0}{A vector of support points}
@@ -46,6 +44,8 @@ makeobject.nptll(v, mu0, pi0, beta, order)
 \item{pi0}{A vector of weights corresponding to the support points}
 
 \item{beta}{structual parameter.}
+
+\item{order}{the parameter for the binned version.}
 }
 \description{
 These functions are used to make the object for computing the non-paramtric mixing
