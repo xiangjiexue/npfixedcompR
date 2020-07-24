@@ -156,7 +156,7 @@ npfixedcompR = R6::R6Class("npfixedcompR",
                          },
                          printgridpoints = function(){
                            if (is.null(private$gridpoints)){
-                             if (is.null(x$setgridpoints)){
+                             if (is.null(self$setgridpoints)){
                                private$gridpoints = seq(from = min(self$data), to = max(self$data), length = 100)
                              }else{
                                self$setgridpoints()
@@ -235,7 +235,8 @@ npfixedcompR = R6::R6Class("npfixedcompR",
                            closs = self$lossfunction(mu0, pi0)
 
                            repeat{
-                             r = self$computeweights(mu0, pi0, self$solvegradientmultiple(mu0, pi0), tol = tol)
+                             newpoints = self$solvegradientmultiple(mu0, pi0)
+                             r = self$computeweights(mu0, pi0, newpoints, tol = tol)
                              mu0 = r$pt; pi0 = r$pr
                              iter = iter + 1
                              nloss = self$lossfunction(mu0, pi0)

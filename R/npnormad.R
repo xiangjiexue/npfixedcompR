@@ -123,7 +123,7 @@ npnormad = R6::R6Class("npnormad",
                            self$computemixdist(mix = mix, tol = tol, maxiter = maxiter)
 
                            if (r1ll - x$len < val){
-                             r = list(iter = 0,
+                             self$result = list(iter = 0,
                                       family = self$type,
                                       max.gradient = self$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
                                       mix = list(pt = 0, pr = 1),
@@ -146,6 +146,6 @@ npnormad = R6::R6Class("npnormad",
 
 #' @rdname makeobject
 #' @export
-makeobject.npnormad = function(v, mu0, pi0, beta){
+makeobject.npnormad = function(v, mu0, pi0, beta, order){
   npnormad$new(v, mu0, pi0, beta)
 }

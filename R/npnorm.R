@@ -160,4 +160,26 @@ npnorm = R6::R6Class("npnorm",
                  ))
 
 
+FDRnpnorm = function(neg, pos, result){
+  # There might be multiple support points at 0 with no reason. Do sum instead.
+  (pnorm(neg, sd = result$beta, lower.tail = TRUE) +
+     pnorm(pos, sd = result$beta, lower.tail = FALSE)) * result$mix$pr[result$mix$pt == 0] /
+    (pnpnorm(neg, result$mix$pt, result$mix$pr, sd = result$beta) +
+       pnpnorm(pos, result$mix$pt, result$mix$pr, sd = result$beta, lower.tail = FALSE))
+}
 
+
+#' @rdname rejectregion
+#' @export
+rejectregion.npnorm = function(result, alpha = 0.05){
+  # object check done via npnormfc2npnorm
+  ans = nloptr(c(-1, 1), function(vec, result, alpha){
+    v = tan(vec)
+    -pnpnorm(v[1], result$mix$pt, result$mix$pr, result$beta, TRUE) -
+      pnpnorm1(v[2], result$mix$pt, result$mix$pr, result$beta, FALSE)
+  }, lb = c(-base::pi / 2, 0), ub = c(0, base::pi / 2), eval_g_ineq = function(vec, result, alpha){
+    v = tan(vec)
+    FDRnpnorm(v[1], v[2], result) - alpha
+  }, result = result, alpha = alpha, opts = list(algorithm = "NLOPT_GN_ORIG_DIRECT", maxeval = -1))
+  list(par = tan(ans$solution), area = -ans$objective)
+}

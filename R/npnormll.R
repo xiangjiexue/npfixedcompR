@@ -18,7 +18,7 @@ npnormll = R6::R6Class("npnormll",
                        if (!missing(mu0)) self$mu0fixed = mu0
                        if (!missing(pi0)) self$pi0fixed = pi0
                        if (!missing(beta)) self$beta = beta
-                       private$precompute = dnpnorm(data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta)
+                       private$precompute = dnpnorm(self$data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta)
                      },
                      lossfunction = function(mu0, pi0){
                        if (any(self$compareattr(mu0, pi0))){
@@ -66,9 +66,15 @@ npnormll = R6::R6Class("npnormll",
                        if (any(self$compareattr(mu0, pi0))){
                          self$setflexden(mu0, pi0)
                        }
-                       mu0new = c(mu0, newweights)
-                       pi0new = c(pi0, rep(0, length(newweights)))
-                       sp = cbind(private$flexden$dens, matrix(dnorm(self$data, mean = rep(newweights, rep(self$len, length(newweights))), sd = self$beta), nrow = self$len, ncol = length(newweights)))
+                       if (length(newweights) > 0){
+                         mu0new = c(mu0, newweights)
+                         pi0new = c(pi0, rep(0, length(newweights)))
+                         sp = cbind(private$flexden$dens, matrix(dnorm(self$data, mean = rep(newweights, rep(self$len, length(newweights))), sd = self$beta), nrow = self$len, ncol = length(newweights)))
+                       }else{
+                         mu0new = mu0
+                         pi0new = pi0
+                         sp = private$flexden$dens
+                       }
                        fp = private$flexden$fullden
                        S = sp / fp
                        a = 2 - private$precompute / fp
@@ -95,7 +101,7 @@ npnormll = R6::R6Class("npnormll",
                        r0ll = self$result$ll
 
                        if (r1ll - r0ll < val){
-                         r = list(iter = 0,
+                         self$result = list(iter = 0,
                                   family = x$type,
                                   max.gradient = self$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
                                   mix = list(pt = 0, pr = 1),
@@ -118,6 +124,6 @@ npnormll = R6::R6Class("npnormll",
 
 #' @rdname makeobject
 #' @export
-makeobject.npnormll = function(v, mu0, pi0, beta){
+makeobject.npnormll = function(v, mu0, pi0, beta, order){
   npnormll$new(v, mu0, pi0, beta)
 }

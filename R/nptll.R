@@ -154,7 +154,7 @@ nptll = R6::R6Class("nptll",
                         r0ll = self$result$ll
 
                         if (r1ll - r0ll < val){
-                          r = list(iter = 0,
+                          self$result = list(iter = 0,
                                    family = self$type,
                                    max.gradient = self$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
                                    mix = list(pt = 0, pr = 1),
@@ -177,6 +177,28 @@ nptll = R6::R6Class("nptll",
 
 #' @rdname makeobject
 #' @export
-makeobject.nptll = function(v, mu0, pi0, beta){
+makeobject.nptll = function(v, mu0, pi0, beta, order){
   nptll$new(v, mu0, pi0, beta)
+}
+
+#' @rdname rejectregion
+#' @export
+rejectregion.npt = function(result, alpha = 0.05){
+  # object check done via nptfc2npt
+  ans = nloptr(c(-1, 1), function(vec, result, alpha){
+    v = tan(vec)
+    -pnpt(v[1], mu0 = result$mix$pt, pi0 = result$mix$pr, df = result$beta, lower.tail = TRUE) -
+      pnpt(v[2], mu0 = result$mix$pt, pi0 = result$mix$pr, df = result$beta, lower.tail = FALSE)
+  }, lb = c(-base::pi / 2, 0), ub = c(0, base::pi / 2), eval_g_ineq = function(vec, result, alpha){
+    v = tan(vec)
+    FDRnpt(v[1], v[2], result) - alpha
+  }, result = result, alpha = alpha, opts = list(algorithm = "NLOPT_GN_ORIG_DIRECT", maxeval = -1))
+  list(par = tan(ans$solution), area = -ans$objective)
+}
+
+FDRnpt = function(neg, pos, result){
+  (pt(neg, df = result$beta, lower.tail = TRUE) +
+     pt(pos, df = result$beta, lower.tail = FALSE)) * result$mix$pr[result$mix$pt == 0]/
+    (pnpt(neg, mu0 = result$mix$pt, pi0 = result$mix$pr, df = result$beta, lower.tail = TRUE) +
+       pnpt(pos, mu0 = result$mix$pt, pi0 = result$mix$pr, df = result$beta, lower.tail = FALSE))
 }

@@ -107,13 +107,13 @@ npnormllw = R6::R6Class("npnormllw",
                            r0ll = self$result$ll
 
                            if (r1ll - r0ll < val){
-                             r = list(iter = 0,
-                                      family = x$type,
-                                      max.gradient = self$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
-                                      mix = list(pt = 0, pr = 1),
-                                      beta = self$beta,
-                                      ll = self$lossfunction(mu0 = 0, pi0 = 1),
-                                      convergence = 0)
+                             self$result = list(iter = 0,
+                                        family = x$type,
+                                        max.gradient = self$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
+                                        mix = list(pt = 0, pr = 1),
+                                        beta = self$beta,
+                                        ll = self$lossfunction(mu0 = 0, pi0 = 1),
+                                        convergence = 0)
                            }else{
                              self$estpi0dS()
                              private$solveestpi0(init = dnpdiscnorm(0, mu0 = self$result$mix$pt, pi0 = self$result$mix$pr, sd = self$beta, h = self$h) / ddiscnorm(0, sd = self$beta, h = self$h),

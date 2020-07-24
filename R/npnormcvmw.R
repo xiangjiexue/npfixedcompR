@@ -97,7 +97,7 @@ npnormcvmw = R6::R6Class("npnormcvmw",
                             nval = sum(self$w) / 3 - sum(self$w * (cumsum(self$w) - 0.5)^2) / sum(self$w)^2
 
                             if (r1ll + nval < val){
-                              r = list(iter = 0,
+                              self$result = list(iter = 0,
                                        family = self$type,
                                        max.gradient = self$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
                                        mix = list(pt = 0, pr = 1),
