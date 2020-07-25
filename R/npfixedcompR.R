@@ -434,7 +434,7 @@ npfixedcompR = R6::R6Class("npfixedcompR",
                              iter = iter + 1
 
                              if (d1 < 0){
-                               if ((init - neg) / (pos - neg) < 0.5){
+                               if ((init - neg) / (pos - neg) < 0.47){
                                  s = (pos + neg) / 2
                                  self$modified(pi0 = s)
                                  self$computemixdist(mix = self$result$mix, maxiter = maxiter, tol = tol)
@@ -447,7 +447,7 @@ npfixedcompR = R6::R6Class("npfixedcompR",
                                }
                                neg = max(neg, init)
                              }else{
-                               if ((pos - init) / (pos - neg) < 0.5){
+                               if ((pos - init) / (pos - neg) < 0.47){
                                  s = (pos + neg) / 2
                                  self$modified(pi0 = s)
                                  self$computemixdist(mix = self$result$mix, maxiter = maxiter, tol = tol)
