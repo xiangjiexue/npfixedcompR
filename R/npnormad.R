@@ -122,7 +122,7 @@ npnormad = R6::R6Class("npnormad",
                            self$modified(pi0 = 0)
                            self$computemixdist(mix = mix, tol = tol, maxiter = maxiter)
 
-                           if (r1ll - x$len < val){
+                           if (r1ll - self$len < val){
                              self$result = list(iter = 0,
                                       family = self$type,
                                       max.gradient = self$gradientfunction(0, 0, 1, order = c(1, 0, 0))$d0,
