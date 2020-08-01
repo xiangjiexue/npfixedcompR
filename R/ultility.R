@@ -200,3 +200,30 @@ plotposteriormapping = function(x, result, result2 = NULL, ...){
 
   NULL
 }
+
+#' AN ADAPTIVE STEP-DOWN PROCEDURE
+#'
+#' This function is a simple implementation of the adaptive step-down procedure
+#' described in Gavrilov et al. (2009)
+#'
+#' @title the adaptive step-down procedure
+#' @param pval a vector of p-values (no necessarily sorted)
+#' @param alpha given FDR level
+#' @return a list with num.rejection, the number of rejections computed by this function,
+#' and classifer, a vector of TRUE and FALSE; if TRUE, the corresponding input is regarded
+#' as null, and as non-null if otherwise.
+#' @examples
+#' adaptive.stepdown(pnorm(-abs(rnorm(1000, c(0, 2)))) * 2)
+#' @export
+adaptive.stepdown = function(pval, alpha = 0.05){
+  pval.sorted = sort(pval)
+  LLL = length(pval)
+  # alpha / (1 - alpha) = i*q/(m + 1 - i)
+  # alpha =  i * q / (m + 1 - i) * (1 - alpha)
+  # alpha =  (i * q / (m + 1 - i)) / (1 + i * q / (m + 1 - i))
+  const = 1:LLL * alpha / LLL:1
+  a = const / (1 + const)
+  k = match(FALSE, pval.sorted <= a)
+  list(num.rejection = k - 1,
+       classifier = pval >= pval.sorted[k])
+}

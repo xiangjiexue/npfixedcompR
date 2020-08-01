@@ -32,8 +32,8 @@ correlation scale.
 \examples{
 n = 100; p = 50
 X = matrix(rnorm(n * p), nrow = n, ncol = p)
-r = covestEB(X)
-x = makeobject(extractlower(r))
+r = cor(X)
+x = makeobject(atanh(extractlower(r)), beta = 1 / sqrt(n - 3))
 r1 = computemixdist(x)
-plotposteriormapping(extractlower(r), r1)
+plotposteriormapping(atanh(extractlower(r)), r1)
 }
