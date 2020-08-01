@@ -133,7 +133,7 @@ npnormad = R6::R6Class("npnormad",
                            }else{
                              self$estpi0dS()
                              private$solveestpi0(init = dnpnorm(0, mu0 = self$result$mix$pt, pi0 = self$result$mix$pr, sd = self$beta) * sqrt(2 * base::pi) * self$beta,
-                                                 val = -x$len - val, tol = tol, maxiter = maxiter, verbose = verbose)
+                                                 val = -self$len - val, tol = tol, maxiter = maxiter, verbose = verbose)
                            }
                          }
                        ),
