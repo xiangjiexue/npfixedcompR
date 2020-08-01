@@ -201,12 +201,15 @@ plotposteriormapping = function(x, result, result2 = NULL, ...){
   NULL
 }
 
-#' AN ADAPTIVE STEP-DOWN PROCEDURE
+#' Implementation of several FDR-controlling procedure in R.
 #'
-#' This function is a simple implementation of the adaptive step-down procedure
-#' described in Gavrilov et al. (2009)
+#' The function \code{adaptive.stepdown} is a simple implementation of the
+#' adaptive step-down procedure described in Gavrilov et al. (2009)
 #'
-#' @title the adaptive step-down procedure
+#' The function \code{BH} is a direct implementation of the procedure
+#' described in Benjamini and Hochberg (1995).
+#'
+#' @title FDR controlling procedures
 #' @param pval a vector of p-values (no necessarily sorted)
 #' @param alpha given FDR level
 #' @return a list with num.rejection, the number of rejections computed by this function,
@@ -214,6 +217,11 @@ plotposteriormapping = function(x, result, result2 = NULL, ...){
 #' as null, and as non-null if otherwise.
 #' @examples
 #' adaptive.stepdown(pnorm(-abs(rnorm(1000, c(0, 2)))) * 2)
+#' BH(pnorm(-abs(rnorm(1000, c(0, 2)))) * 2)
+#' @name FDRcontrol
+NULL
+
+#' @rdname FDRcontrol
 #' @export
 adaptive.stepdown = function(pval, alpha = 0.05){
   pval.sorted = sort(pval)
@@ -226,4 +234,15 @@ adaptive.stepdown = function(pval, alpha = 0.05){
   k = match(FALSE, pval.sorted <= a)
   list(num.rejection = k - 1,
        classifier = pval >= pval.sorted[k])
+}
+
+#' @rdname FDRcontrol
+#' @export
+BH = function(pval, alpha = 0.05){
+  pval.sorted = sort(pval, decreasing = TRUE)
+  LLL = length(pval)
+  a = LLL:1 * alpha / LLL
+  k = match(TRUE, pval.sorted <= a)
+  list(num.rejection = ifelse(is.na(k), 0, LLL + 1 - k),
+       classifier = if (is.na(k)) rep(TRUE, LLL) else pval > pval.sorted[k])
 }
