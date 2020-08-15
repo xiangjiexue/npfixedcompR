@@ -19,8 +19,8 @@ npnormadw = R6::R6Class("npnormadw",
                                                   addconst = numeric(1))
                            attr(private$flexden, "mu0") = NULL
                            attr(private$flexden, "pi0") = NULL
-                           a1 = (2 * cumsum(self$w) - 1) / sum(self$w)
-                           private$precompute = list(a1 = a1 * self$w, a2 = rev(a1) * self$w,
+                           a1 = (2 * cumsum(self$w) - self$w) / sum(self$w)
+                           private$precompute = list(a1 = a1 * self$w, a2 = (2 - a1) * self$w,
                                                      precompute1 = pnpdiscnorm(self$data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta, h = self$h),
                                                      precompute2 = pnpdiscnorm(self$data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta, lower.tail = FALSE, h = self$h))
                          },

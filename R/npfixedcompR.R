@@ -290,7 +290,7 @@ npfixedcompR = R6::R6Class("npfixedcompR",
                          solvegradientmultipled0 = function(mu0, pi0, tol = 1e-6){
                            points = private$gridpoints
                            pointsval = diff(self$gradientfunction(mu = points, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0)
-                           index = seq(1, by = 1, length = length(points) - 1)[pointsval[-length(pointsval)] < 0 & pointsval[-1] > 0]
+                           index = seq(1, by = 1, length = length(points) - 2)[pointsval[-length(pointsval)] < 0 & pointsval[-1] > 0]
                            if (length(index) >= 1){
                              r = sapply(index, function(ddd){
                                private$solvegradientsingled0(mu0 = mu0, pi0 = pi0, lower = points[ddd], upper = points[ddd + 2], tol)

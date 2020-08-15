@@ -78,7 +78,7 @@ npnormcvmw = R6::R6Class("npnormcvmw",
                           },
                           estpi0dS = function(){
                             private$S1 = list(a1 = pdiscnorm(self$data, sd = self$beta, h = self$h),
-                                              a2 = (2 * cumsum(self$w) - 1) / 2 / sum(self$w))
+                                              a2 = (2 * cumsum(self$w) - self$w) / 2 / sum(self$w))
                           },
                           estpi0d = function(mu0, pi0){
                             ans = vector("list", 2)
@@ -94,7 +94,7 @@ npnormcvmw = R6::R6Class("npnormcvmw",
                             r1ll = self$result$ll
                             self$modified(pi0 = 0)
                             self$computemixdist(mix = mix, tol = tol, maxiter = maxiter)
-                            nval = sum(self$w) / 3 - sum(self$w * (cumsum(self$w) - 0.5)^2) / sum(self$w)^2
+                            nval = sum(self$w) / 3 - sum(self$w * (cumsum(self$w) - 0.5 * self$w)^2) / sum(self$w)^2
 
                             if (r1ll + nval < val){
                               self$result = list(iter = 0,
