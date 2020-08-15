@@ -15,7 +15,7 @@ npnormad = R6::R6Class("npnormad",
                            attr(private$flexden, "mu0") = NULL
                            attr(private$flexden, "pi0") = NULL
                            a1 = seq(from = 1 / self$len, to = (2 * self$len - 1) / self$len, length = self$len)
-                           private$precompute = list(a1 = a1, a2 = rev(a1),
+                           private$precompute = list(a1 = a1, a2 = 2 - a1,
                                                      precompute1 = pnpnorm(self$data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta),
                                                      precompute2 = pnpnorm(self$data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta, lower.tail = FALSE))
                          },
