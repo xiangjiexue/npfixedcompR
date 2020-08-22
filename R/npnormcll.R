@@ -89,18 +89,22 @@ npnormcll = R6::R6Class("npnormcll",
                         if (any(self$compareattr(mu0, pi0))){
                           self$setflexden(mu0, pi0)
                         }
-                        temp = dnormc(self$data, mean = rep(mu, rep(self$len, length(mu))), n = self$beta) * sum(pi0)
                         ans = vector("list", 3)
                         names(ans) = c("d0", "d1", "d2")
-                        murep = rep(mu, rep(length(self$data), length(mu)))
-                        # only d0 is implemented
-                        if (order[1] == 1){
-                          ans$d0 = .colSums((private$flexden$flexden - temp) / private$flexden$fullden, m = self$len, n = length(mu))
-                        }
-                        if (order[2] == 1){
-                          temp2 = ((self$beta + 4) * murep^3 - 3 * self$beta * murep^2 * self$data + murep * (2 * self$beta * self$data^2 + self$beta - 2) -
-                                     self$beta * self$data - 2 * murep^5) / (1 - murep^2)^3
-                          ans$d1 = .colSums(temp2 * temp / private$flexden$fullden, m = self$len, n = length(mu))
+                        if (length(mu) > 0){
+                          murep = rep(mu, rep(self$len, length(mu)))
+                          temp = dnormc(self$data, mean = murep, n = self$beta)
+                          private$flexden$temp = matrix(temp, ncol = length(mu))
+                          # only d0 is implemented
+                          if (order[1] == 1){
+                            ans$d0 = .colSums((private$flexden$flexden - temp * sum(pi0)) / private$flexden$fullden, m = self$len, n = length(mu))
+                          }
+                          if (order[2] == 1){
+                            temp2 = ((self$beta + 4) * murep^3 - 3 * self$beta * murep^2 * self$data + murep * (2 * self$beta * self$data^2 + self$beta - 2) -
+                                       self$beta * self$data - 2 * murep^5) / (1 - murep^2)^3
+                            ans$d1 = .colSums(temp2 * temp / private$flexden$fullden, m = self$len, n = length(mu))  * sum(pi0)
+                          }
+
                         }
 
                         ans
@@ -109,9 +113,15 @@ npnormcll = R6::R6Class("npnormcll",
                         if (any(self$compareattr(mu0, pi0))){
                           self$setflexden(mu0, pi0)
                         }
-                        mu0new = c(mu0, newweights)
-                        pi0new = c(pi0, rep(0, length(newweights)))
-                        sp = cbind(private$flexden$dens, matrix(dnormc(self$data, mean = rep(newweights, rep(self$len, length(newweights))), n = self$beta), nrow = self$len, ncol = length(newweights)))
+                        if (length(newweights) > 0){
+                          mu0new = c(mu0, newweights)
+                          pi0new = c(pi0, rep(0, length(newweights)))
+                          sp = cbind(private$flexden$dens, private$flexden$temp)
+                        }else{
+                          mu0new = mu0
+                          pi0new = pi0
+                          sp = private$flexden$dens
+                        }
                         fp = private$flexden$fullden
                         S = sp / fp
                         a = 2 - private$precompute / fp

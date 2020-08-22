@@ -296,10 +296,13 @@ npfixedcompR = R6::R6Class("npfixedcompR",
                                private$solvegradientsingled0(mu0 = mu0, pi0 = pi0, lower = points[ddd], upper = points[ddd + 2], tol)
                              })
                              r = c(points[1], r, points[length(points)])
-                             r = r[self$gradientfunction(mu = r, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
+                             dd = self$gradientfunction(mu = r, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0
+                             r = r[dd < 0]
                            }else{
-                             r = c(points[1], points[length(points)])[self$gradientfunction(mu = c(points[1], points[length(points)]), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
+                             dd = self$gradientfunction(mu = c(points[1], points[length(points)]), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0
+                             r = c(points[1], points[length(points)])[dd < 0]
                            }
+                           private$flexden$temp = private$flexden$temp[, dd < 0, drop = FALSE]
                            r
                          },
                          solvegradientsingled1 = function(mu0, pi0, lower, upper, tol = 1e-6){
@@ -356,10 +359,13 @@ npfixedcompR = R6::R6Class("npfixedcompR",
                              #   solvegradientsingled1(x = x, mu0 = mu0, pi0 = pi0, lower = points[ddd], upper = points[ddd + 1], tol)
                              # })
                              r = c(points[1], private$solvegradientsingled1(mu0 = mu0, pi0 = pi0, lower = points[index], upper = points[index + 1], tol), points[length(points)])
-                             r = r[self$gradientfunction(mu = r, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
+                             dd = self$gradientfunction(mu = r, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0
+                             r = r[dd < 0]
                            }else{
-                             r = c(points[1], points[length(points)])[self$gradientfunction(mu = c(points[1], points[length(points)]), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
+                             dd = self$gradientfunction(mu = c(points[1], points[length(points)]), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0
+                             r = c(points[1], points[length(points)])[dd < 0]
                            }
+                           private$flexden$temp = private$flexden$temp[, dd < 0, drop = FALSE]
                            r
                          },
                          solvegradientsingled2 = function(mu0, pi0, lower, upper, tol = 1e-6){
@@ -407,10 +413,13 @@ npfixedcompR = R6::R6Class("npfixedcompR",
                            index = seq(1, by = 1, length = length(points) - 1)[pointsval[-length(pointsval)] < 0 & pointsval[-1] > 0]
                            if (length(index) >= 1){
                              r = c(points[1], private$solvegradientsingled2(mu0 = mu0, pi0 = pi0, lower = points[index], upper = points[index + 1], tol), points[length(points)])
-                             r = r[self$gradientfunction(mu = r, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
+                             dd = self$gradientfunction(mu = r, mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0
+                             r = r[dd < 0]
                            }else{
-                             r = c(points[1], points[length(points)])[self$gradientfunction(mu = c(points[1], points[length(points)]), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0 < 0]
+                             dd = self$gradientfunction(mu = c(points[1], points[length(points)]), mu0 = mu0, pi0 = pi0, order = c(1, 0, 0))$d0
+                             r = c(points[1], points[length(points)])[dd < 0]
                            }
+                           private$flexden$temp = private$flexden$temp[, dd < 0, drop = FALSE]
                            r
                          },
                          solveestpi0 = function(init, val, tol = 1e-6, maxiter = 100, verbose = FALSE){

@@ -51,8 +51,9 @@ npnormllw = R6::R6Class("npnormllw",
                            ans = vector("list", 3)
                            names(ans) = c("d0", "d1", "d2")
                            if (order[1] == 1){
-                             temp = ddiscnorm(murep, sd = self$beta, h = self$h) * sum(pi0)
-                             ans$d0 = .colSums((private$flexden$flexden - temp) / private$flexden$fullden * self$w, m = self$len, n = length(mu))
+                             temp = ddiscnorm(murep, sd = self$beta, h = self$h)
+                             private$flexden$temp = matrix(temp, ncol = length(mu))
+                             ans$d0 = .colSums((private$flexden$flexden - temp * sum(pi0)) / private$flexden$fullden * self$w, m = self$len, n = length(mu))
                            }
                            if (any(order[2:3] == 1)){
                              temp2 = dnorm(self$h + murep, sd = self$beta)
@@ -75,7 +76,7 @@ npnormllw = R6::R6Class("npnormllw",
                            if (length(newweights) > 0){
                              mu0new = c(mu0, newweights)
                              pi0new = c(pi0, rep(0, length(newweights)))
-                             sp = cbind(private$flexden$dens, matrix(ddiscnorm(self$data, mean = rep(newweights, rep(self$len, length(newweights))), sd = self$beta, h = self$h), nrow = self$len, ncol = length(newweights)))
+                             sp = cbind(private$flexden$dens, private$flexden$temp)
                            }else{
                              mu0new = mu0
                              pi0new = pi0

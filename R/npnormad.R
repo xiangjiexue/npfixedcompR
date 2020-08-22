@@ -61,8 +61,11 @@ npnormad = R6::R6Class("npnormad",
                            ans = vector("list", 3)
                            names(ans) = c("d0", "d1", "d2")
                            if (order[1] == 1){
-                             ans$d0 = .colSums(pnorm(murep, sd = self$beta) * private$precompute$a1 / private$flexden$fullden +
-                                                 pnorm(murep, sd = self$beta, lower.tail = FALSE) * private$precompute$a2 / private$flexden$fullden2,
+                             temp1 = pnorm(murep, sd = self$beta)
+                             temp2 = pnorm(murep, sd = self$beta, lower.tail = FALSE)
+                             private$flexden$temp = rbind(matrix(temp1, ncol = length(mu)), matrix(temp2, ncol = length(mu)))
+                             ans$d0 = .colSums(temp1 * private$precompute$a1 / private$flexden$fullden +
+                                                 temp2 * private$precompute$a2 / private$flexden$fullden2,
                                                m = self$len, n = length(mu)) * -sum(pi0) + private$flexden$addconst
                            }
                            if (any(order[2:3] == 1)){
@@ -84,11 +87,11 @@ npnormad = R6::R6Class("npnormad",
                            }
                            mu0new = c(mu0, newweights)
                            pi0new = c(pi0, rep(0, length(newweights)))
-                           sf = cbind(private$flexden$dens, matrix(pnorm(self$data, mean = rep(newweights, rep(self$len, length(newweights))), sd = self$beta), nrow = self$len, ncol = length(newweights)))
+                           sf = cbind(private$flexden$dens, private$flexden$temp[1:self$len, , drop = FALSE])
                            ss = private$flexden$fullden
                            S = sf / ss
 
-                           uf = cbind(private$flexden$dens2, matrix(pnorm(self$data, mean = rep(newweights, rep(self$len, length(newweights))), sd = self$beta, lower.tail = FALSE), nrow = self$len, ncol = length(newweights)))
+                           uf = cbind(private$flexden$dens2, private$flexden$temp[1:self$len + self$len, , drop = FALSE])
                            us = private$flexden$fullden2
                            U = uf / us
 

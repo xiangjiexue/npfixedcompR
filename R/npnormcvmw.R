@@ -52,8 +52,9 @@ npnormcvmw = R6::R6Class("npnormcvmw",
                             ans = vector("list", 3)
                             names(ans) = c("d0", "d1", "d2")
                             if (order[1] == 1){
-                              temp = pdiscnorm(murep, sd = self$beta, h = self$h) * sum(pi0)
-                              ans$d0 = .colSums((temp - private$flexden$flexden) * private$flexden$fullden * self$w, m = self$len, n = length(mu))
+                              temp = pdiscnorm(murep, sd = self$beta, h = self$h)
+                              private$flexden$temp = matrix(temp, ncol = length(mu))
+                              ans$d0 = .colSums((temp * sum(pi0) - private$flexden$flexden) * private$flexden$fullden * self$w, m = self$len, n = length(mu))
                             }
                             if (any(order[2:3] == 1)){
                               temp = dnorm(murep + self$h, sd = self$beta) * private$flexden$fullden * self$w
@@ -72,7 +73,7 @@ npnormcvmw = R6::R6Class("npnormcvmw",
                               self$setflexden(mu0, pi0)
                             }
                             mu0new = c(mu0, newweights)
-                            S = cbind(private$flexden$dens, matrix(pdiscnorm(self$data, mean = rep(newweights, rep(self$len, length(newweights))), sd = self$beta, h = self$h), nrow = self$len, ncol = length(newweights)))
+                            S = cbind(private$flexden$dens, private$flexden$temp)
                             pi0new = pnnls(S * sqrt(self$w), private$precompute * sqrt(self$w), sum = 1 - sum(self$pi0fixed))$x
                             self$collapsemix(mu0new, pi0new, tol)
                           },
