@@ -52,22 +52,28 @@ These functions are used to make the object for computing the non-paramtric mixi
 distribution or estimating the proportion of zero using non-parametric methods.
 }
 \details{
-This is a S3 generic function for making the object for computing the non-parametric
+This is a generic function for making the object for computing the non-parametric
 mixing distribution or estimating the proportion of zero.
 
-currently implemented families are:
+current implemented families are:
 \itemize{
-\item npnormll : normal density using maximum likelihood
-\item npnormllw : Binned version of normal density using maximum likelihood
-\item npnormcvm : normal density using Cramer-von Mises
-\item npnormcvmw : Binned version of normal density using Cramer-von Mises
-\item npnormad : normal density using Anderson-Darling
-\item npnormadw : Binned version of normal density using Anderson-Darling
-\item nptll : t density using maximum likelihood
-\item npnormcll : one-parameter normal distribution used for approximate sample
+\item npnormll : normal density using maximum likelihood (Chapter 3). The default beta is 1.
+\item npnormllw : Binned version of normal density using maximum likelihood (Chapter 6).
+The default beta is 1 and the default order is -3.
+\item npnormcvm : normal density using the Cramer-von Mises distance (Chapter 5). The default beta is 1.
+\item npnormcvmw : Binned version of normal density using the Cramer-von Mises distance (Chapter 6).
+The default beta is 1 and the default order is -3.
+\item npnormad : normal density using the Anderson-Darling distance (Chapter 5). The default beta is 1.
+\item npnormadw : Binned version of normal density using the Anderson-Darling distance (Chapter 6)
+The default beta is 1 and the default order is -3.
+\item nptll : t-density using maximum likelihood (Chapter 3). The default beta is infinity (normal distribution).
+\item npnormcll : the one-parameter normal distribution used for approximating the sample
 correlation coefficients using maximum likelihood. This does not have a
-corresponding estimation of zero due to incomplete of theory.
+corresponding estimation of zero due to incompleted theory (Chapter 8).
+There is no default beta. The structure beta is the number of observations.
 }
 
 The default method used is npnormll.
+
+The detailed description of the npfixedcompRobject class is in \code{\link{npfixedcompRobject}}.
 }

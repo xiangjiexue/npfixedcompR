@@ -32,7 +32,7 @@ It is not shown in the parameter section since various method have different
 default thresold values and this function essentially calls the class method
 in the object.
 
-The full list of implemented family is in \code{\link{makeobject}}.
+The full list of implemented families is in \code{\link{makeobject}}.
 }
 \examples{
 data = rnorm(500, c(0, 2))

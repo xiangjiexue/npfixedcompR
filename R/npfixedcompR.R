@@ -14,33 +14,162 @@
 #' @name npfixedcompR
 NULL
 
+#' This documentation gives a detailed description of the npfixedcompR object. This implementation uses
+#' the R6 object.
+#'
+#' The structure of the object currently has three layers: The foundation layer is the
+#' npfixedcompR class, which has components common to all the specific classes; The second
+#' layer is the distributional layer, which has components common to all the classes with
+#' the same distribution (the npnorm class); The third layer is the specific layer
+#' (the npnormll class), which contains components specific to this particular loss. Since
+#' the nptll and the npnormcll class only has one loss implemented, they are implemented in
+#' the second layer.
+#'
+#' For the following, if a component is listed as public, then it can be accessed as needed.
+#' If a component is listed as private, then it can not be accessed. There might be functions
+#' listed as public can be used to modified the private values.
+#'
+#' The component in the npfixedcompR class are as follows.
+#'
+#' - \code{mu0fixed} (public) : The vector of the locations of fixed support points.
+#' This can be set by \code{initialize} or \code{modified} implemented in the last year.
+#'
+#' - \code{pi0fixed} (public) : The vector of the weights of fixed support points.
+#' This can be set by \code{initialize} or \code{modified} implemented in the last year.
+#'
+#' - \code{data} (public) : The observations. The observations can only be set by
+#' \code{\link{makeobject}} via \code{initialzed}. Once the object is defined, the observations
+#' can not be modified.
+#'
+#' - \code{len} (public) : The length of the observations. This is different to the effective
+#' sample size when dealing with the binned version.
+#'
+#' - \code{result} (public) : The estimated mixing distribution. This is used to store the result
+#' computed by \code{computemixdist} or \code{estpi0}.
+#'
+#' - \code{methodflag} (public) : This function is used to print or set the algorithm used for
+#' finding the new support points. The default argument is \code{NULL}, which prints the private
+#' component \code{mflag} implemented in the final layer. Other inputs can be \code{d0}, \code{d1}
+#' and \code{d2}, which change the algorithm used. The algorithm used should depend on the final layer
+#' (hence \code{mflag} is implemented in the final layer).
+#'
+#' - \code{checklossfunction} (public) : The function used for Armijo rule; see Wang (2007).
+#'
+#' - \code{collapsemix} (public) : The function used for collapsing mixing distributions; see \code{\link[nspmix]{cnm}}.
+#'
+#' - \code{compareattr} (public) : The function used for comparing the attributes \code{mu0} and \code{pi0} for performence
+#' purposes. If the geometry of \code{mu0} and \code{pi0} is close to the stored ones, there is no need to recompute
+#' the information related to this pair.
+#'
+#' - \code{solvegradientmultiple} (public) : The function used for computing the new support points.
+#' This is function calls for \code{solvegradientmultipled0}, \code{solvegradientmultipled1} and
+#' \code{solvegradientmultipled2} according to the private component \code{mflag}. The detailed descriptions
+#' of the algorithms used can be found in Appendix B of the thesis. The break points of the smaller intervals
+#' are computed through \code{printgridpoints} implemented in the distributional layer.
+#'
+#' - \code{computemixdist} (public) : The function used for computing the mixing distribution given
+#' \code{mu0fixed} and \code{pi0fixd}. The result is stored in \code{result} component.
+#'
+#' - \code{estpi0d} (public) : The function used for computing the derivative when estimate the null proportion.
+#' This default implementation can be used in the Newton-Raphson method. This is overwritten by the
+#' espti0d in the last layer, which can be used in the Halley method.
+#'
+#' - \code{solvegradientmultipled0} (private), \code{solvegradientmultipled1} (private) and
+#' \code{solvegradientmultipled2} (private) : The functions for computing the new support points. The underlying
+#' computing functions \code{solvegradientsingled1} and \code{solvegradientsingled2} are vectorised
+#' implementations while \code{solvegradientsingled0} uses the \code{\link[stats]{optimize}}.
+#'
+#' - \code{solveestpi0} (private) : The function for computing the null proportion. The algofithm used depends
+#' on \code{estpi0d}. This is essentially the root-finding algorithm and the formulation can be found in
+#' Appendix B of the thesis.
+#'
+#' - \code{gridpoints} (private) : The break points for the smaller interval when computing the new support
+#' points. This is initialised by \code{printgridpoints} in the distributional layer.
+#'
+#' The components in the distributional layer are as follows.
+#'
+#' - \code{setgridpoints} (public) : The function used to initialise \code{gridpoints}. The range of the
+#' support can be found in Chapter 3 of the thesis.
+#'
+#' - \code{initpoints} (public) : The function for generating the starting mixing distribution, if not
+#' specified in \code{computemixdist}; see \code{link[nspmix]{npnorm}} for example.
+#'
+#' The componets in the final layer are as follows.
+#'
+#' - \code{beta} (public) : The structural parameter. The structural parameter is always considered as fixed
+#' and can be changed using \code{initisalize} and \code{modified}.
+#'
+#' - \code{type} (public) : The flag for component distributions.
+#'
+#' - \code{initialize} (public) : The function for initialising the object for computing. It sets the data,
+#' the length, fixed support points, structural parameter and any precomputed values.
+#'
+#' - \code{modified} (public) : The function for modifying the object for further computing. It sets the
+#' fixed support points, the structural parameter and any precomputed values related to the change of
+#' the fixed support points.
+#'
+#' - \code{lossfunction} (public) : THe function for computing the loss function given a mixing distribution.
+#'
+#' - \code{setflexden} (public) : This function is used to set the precomputed values for performance
+#' purposes.
+#'
+#' - \code{gradientfunction} (public) : This function computes the gradient for the implemented families.
+#' The output is a list of length 3: The gradient \code{d0}, the first derivative with respect to the location
+#' parameter \code{d1} and the second derivateive with respect to the location parameter \code{d2}.
+#'
+#' - \code{computeweights} (public) : This function computes the new weights given fixed support points,
+#' which is needed in \code{computemixdist} in the first layer.
+#'
+#' - \code{estpi0dS} (public) : Generating precomputed values for estimating the null proportion. This is
+#' primarily for performance purposes.
+#'
+#' - \code{estpi0d} (public) : This function overwrites the function of the same name in the first layer
+#' for a faster computation of the null proportions.
+#'
+#' - \code{estpi0} (public) : This function computes the null proportions depending on the given loss/distance.
+#'
+#' - \code{precompute} (private), \code{flexden} (private), \code{S1} (private) : The object for storing the
+#' precomputed values for performance purposes.
+#'
+#' @title The npfixedcompR object
+#' @references
+#' Wang, Yong. "On Fast Computation of the Non-Parametric Maximum Likelihood Estimate of a Mixing Distribution." Journal of the Royal Statistical Society. Series B (Statistical Methodology) 69, no. 2 (2007): 185-98. \url{http://www.jstor.org/stable/4623262}.
+#' @name npfixedcompRobject
+NULL
+
 #' These functions are used to make the object for computing the non-paramtric mixing
 #' distribution or estimating the proportion of zero using non-parametric methods.
 #'
-#' This is a S3 generic function for making the object for computing the non-parametric
+#' This is a generic function for making the object for computing the non-parametric
 #' mixing distribution or estimating the proportion of zero.
 #'
-#' currently implemented families are:
+#' current implemented families are:
 #'
-#' - npnormll : normal density using maximum likelihood
+#' - npnormll : normal density using maximum likelihood (Chapter 3). The default beta is 1.
 #'
-#' - npnormllw : Binned version of normal density using maximum likelihood
+#' - npnormllw : Binned version of normal density using maximum likelihood (Chapter 6).
+#' The default beta is 1 and the default order is -3.
 #'
-#' - npnormcvm : normal density using Cramer-von Mises
+#' - npnormcvm : normal density using the Cramer-von Mises distance (Chapter 5). The default beta is 1.
 #'
-#' - npnormcvmw : Binned version of normal density using Cramer-von Mises
+#' - npnormcvmw : Binned version of normal density using the Cramer-von Mises distance (Chapter 6).
+#' The default beta is 1 and the default order is -3.
 #'
-#' - npnormad : normal density using Anderson-Darling
+#' - npnormad : normal density using the Anderson-Darling distance (Chapter 5). The default beta is 1.
 #'
-#' - npnormadw : Binned version of normal density using Anderson-Darling
+#' - npnormadw : Binned version of normal density using the Anderson-Darling distance (Chapter 6)
+#' The default beta is 1 and the default order is -3.
 #'
-#' - nptll : t density using maximum likelihood
+#' - nptll : t-density using maximum likelihood (Chapter 3). The default beta is infinity (normal distribution).
 #'
-#' - npnormcll : one-parameter normal distribution used for approximate sample
+#' - npnormcll : the one-parameter normal distribution used for approximating the sample
 #' correlation coefficients using maximum likelihood. This does not have a
-#' corresponding estimation of zero due to incomplete of theory.
+#' corresponding estimation of zero due to incompleted theory (Chapter 8).
+#' There is no default beta. The structure beta is the number of observations.
 #'
 #' The default method used is npnormll.
+#'
+#' The detailed description of the npfixedcompRobject class is in \code{\link{npfixedcompRobject}}.
 #'
 #' @title Making object for computation
 #' @param v the object either numeric or the implmented family
@@ -512,7 +641,7 @@ npfixedcompR = R6::R6Class("npfixedcompR",
 #' default thresold values and this function essentially calls the class method
 #' in the object.
 #'
-#' The full list of implemented family is in \code{\link{makeobject}}.
+#' The full list of implemented families is in \code{\link{makeobject}}.
 #'
 #' @title Computing non-parametric mixing distribution with estimated proportion at 0
 #' @param x a object from implemented family

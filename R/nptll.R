@@ -15,8 +15,9 @@
 dnpt = function(x, mu0 = 0, pi0 = 0, df, log = FALSE){
   if (length(mu0) != length(pi0))
     stop("Length mismatch")
-  temp = .rowSums(dt(x, ncp = rep(mu0, rep(length(x), length(mu0))), df = df) *
-                    rep(pi0, rep(length(x), length(pi0))), m = length(x), n = length(mu0))
+  temp = dt(x, ncp = rep(mu0, rep(length(x), length(mu0))), df = df)
+  dim(temp) = c(length(x), length(mu0))
+  temp = drop(temp %*% pi0)
   if (log) log(temp) else temp
 }
 
@@ -25,8 +26,9 @@ dnpt = function(x, mu0 = 0, pi0 = 0, df, log = FALSE){
 pnpt = function(x, mu0 = 0, pi0 = 0, df, lower.tail = TRUE, log.p = FALSE){
   if (length(mu0) != length(pi0))
     stop("Length mismatch")
-  temp = .rowSums(pt(x, ncp = rep(mu0, rep(length(x), length(mu0))), df = df, lower.tail = lower.tail) *
-                    rep(pi0, rep(length(x), length(pi0))), m = length(x), n = length(mu0))
+  temp = pt(x, ncp = rep(mu0, rep(length(x), length(mu0))), df = df, lower.tail = lower.tail)
+  dim(temp) = c(length(x), length(mu0))
+  temp = drop(temp %*% pi0)
   if (log.p) log(temp) else temp
 }
 
