@@ -397,8 +397,8 @@ npfixedcompR = R6::R6Class("npfixedcompR",
                              pos[!j0] = pmin(pos[!j0], init[!j0])
 
                              init[!index] = init[!index] - d1[!index] / d2[!index]
-                             mflag = init < neg | init > pos
-                             init[!index & mflag] = (pos[!index & mflag] + neg[!index & mflag]) / 2
+                             mflag = init > neg & init < pos
+                             init[!index & !mflag] = (pos[!index & !mflag] + neg[!index & !mflag]) / 2
 
                              r = self$gradientfunction(init[!index], mu0, pi0, order = c(0, 1, 1))
                              d1[!index] = r$d1
