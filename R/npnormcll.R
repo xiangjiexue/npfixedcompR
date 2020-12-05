@@ -41,8 +41,8 @@ npnormcll = R6::R6Class("npnormcll",
                         private$gridpoints = seq(from = min(self$data), to = max(self$data), length.out = grid)
                       },
                       initpoints = function(){
-                        self$setgridpoints()
-                        list(pt = private$gridpoints, pr = rep(1 / length(private$gridpoints), length(private$gridpoints)))
+                        list(pt = seq(from = min(self$data), to = max(self$data), length.out = 10),
+                             pr = rep(1 / 10, 10))
                       },
                       beta = NULL,
                       type = "npnormc",
