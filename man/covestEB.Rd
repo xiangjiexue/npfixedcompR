@@ -2,18 +2,23 @@
 % Please edit documentation in R/ultility.R
 \name{covestEB}
 \alias{covestEB}
+\alias{covestEB.cor}
 \title{Estimating Covariance Matrix using Empirical Bayes}
 \usage{
 covestEB(X, estpi0 = FALSE, order = -3, verbose = FALSE)
+
+covestEB.cor(X, verbose = FALSE)
 }
 \arguments{
-\item{X}{a matrix of size n * p, where n is the number of observations and p is the number of variables}
+\item{X}{a matrix of size n * p, where n is the number of observations and
+p is the number of variables}
 
-\item{estpi0}{logical; if TRUE, the NPMLE is estimated based on the estimation of pi0, which in this case
-can be used to detect sparsity or assume sparsity.}
+\item{estpi0}{logical; if TRUE, the NPMLE is estimated based on the
+estimation of pi0, which in this case can be used to detect sparsity or
+assume sparsity.}
 
-\item{order}{the level of binning to use when the number of observations passed to the computation is greater
-than 5000.}
+\item{order}{the level of binning to use when the number of observations
+passed to the computation is greater than 5000.}
 
 \item{verbose}{logical; If TRUE, the intermediate results will be shown.}
 }
@@ -23,8 +28,20 @@ a covariance matrix estimate of size p * p.
 \description{
 Estimating covariance matrix using Empirical Bayes
 }
+\details{
+The function \code{covestEB} performs covariance matrix estimation using
+Fisher transformation, while the function \code{covestEB.cor} performs
+covariance estimation directly on sample correlation coefficients using
+one-parameter normal approximation.
+
+Covariance matrix estimation using Fisher transformation supports estimation
+sparsity as well as large-scale computation, while estimation on the original
+scale supports neither and it is for comparison only. It is recommended to
+perform estimation on Fisher-transformed sample correlation coefficients.
+}
 \examples{
 n = 100; p = 50
 X = matrix(rnorm(n * p), nrow = n, ncol = p)
 r = covestEB(X)
+r2 = covestEB.cor(X)
 }

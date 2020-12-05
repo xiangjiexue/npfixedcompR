@@ -4,6 +4,7 @@
 \alias{posteriormean}
 \alias{posteriormean.npnorm}
 \alias{posteriormean.npt}
+\alias{posteriormean.npnormc}
 \title{Find the posterior mean}
 \usage{
 posteriormean(x, result, fun = function(x) x)
@@ -11,6 +12,8 @@ posteriormean(x, result, fun = function(x) x)
 posteriormean.npnorm(x, result, fun = function(x) x)
 
 posteriormean.npt(x, result, fun = function(x) x)
+
+posteriormean.npnormc(x, result, fun = function(x) x)
 }
 \arguments{
 \item{x}{a vector of observations}
@@ -32,4 +35,8 @@ posteriormean(data, r1)
 x2 = makeobject(data, pi0 = 0.5, method = "nptll") # equivalent to normal
 r2 = computemixdist(x2)
 posteriormean(data, r2, fun = function(x) x^2)
+data = runif(500, min = -0.5, max = 0.5)
+x3 = makeobject(data, method = "npnormcll", beta = 100)
+r3 = computemixdist(x3)
+posteriormean(data, r3)
 }
