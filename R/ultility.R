@@ -69,6 +69,10 @@ rejectregion = function(result, alpha = 0.05){
 #' x2 = makeobject(data, pi0 = 0.5, method = "nptll") # equivalent to normal
 #' r2 = computemixdist(x2)
 #' posteriormean(data, r2, fun = function(x) x^2)
+#' data = runif(500, min = -0.5, max = 0.5)
+#' x3 = makeobject(data, method = "npnormcll", beta = 100)
+#' r3 = computemixdist(x3)
+#' posteriormean(data, r3)
 #' @export
 posteriormean = function(x, result, fun = function(x) x){
   f = match.fun(paste0("posteriormean.", result$family))
@@ -95,26 +99,51 @@ posteriormean.npt = function(x, result, fun = function(x) x){
     .rowSums(temp, m = length(x), n = length(result$mix$pt))
 }
 
+#' @rdname posteriormean
+#' @export
+posteriormean.npnormc = function(x, result, fun = function(x) x){
+  temp = dnormc(x, mean = rep(result$mix$pt, rep(length(x), length(result$mix$pt))), n = result$beta) *
+    rep(result$mix$pr, rep(length(x), length(result$mix$pr)))
+  .rowSums(temp * rep(fun(result$mix$pt), rep(length(x), length(result$mix$pt))),
+           m = length(x), n = length(result$mix$pt)) /
+    .rowSums(temp, m = length(x), n = length(result$mix$pt))
+}
+
 #' Estimating covariance matrix using Empirical Bayes
 #'
+#' The function \code{covestEB} performs covariance matrix estimation using
+#' Fisher transformation, while the function \code{covestEB.cor} performs
+#' covariance estimation directly on sample correlation coefficients using
+#' one-parameter normal approximation.
+#'
+#' Covariance matrix estimation using Fisher transformation supports estimation
+#' sparsity as well as large-scale computation, while estimation on the original
+#' scale supports neither and it is for comparison only. It is recommended to
+#' perform estimation on Fisher-transformed sample correlation coefficients.
+#'
 #' @title Estimating Covariance Matrix using Empirical Bayes
-#' @param X a matrix of size n * p, where n is the number of observations and p is the number of variables
-#' @param estpi0 logical; if TRUE, the NPMLE is estimated based on the estimation of pi0, which in this case
-#' can be used to detect sparsity or assume sparsity.
-#' @param order the level of binning to use when the number of observations passed to the computation is greater
-#' than 5000.
+#' @param X a matrix of size n * p, where n is the number of observations and
+#' p is the number of variables
+#' @param estpi0 logical; if TRUE, the NPMLE is estimated based on the
+#' estimation of pi0, which in this case can be used to detect sparsity or
+#' assume sparsity.
+#' @param order the level of binning to use when the number of observations
+#' passed to the computation is greater than 5000.
 #' @param verbose logical; If TRUE, the intermediate results will be shown.
 #' @return a covariance matrix estimate of size p * p.
+#' @rdname covestEB
 #' @examples
 #' n = 100; p = 50
 #' X = matrix(rnorm(n * p), nrow = n, ncol = p)
 #' r = covestEB(X)
+#' r2 = covestEB.cor(X)
 #' @export
 covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
   p = dim(X)[2]
   n = dim(X)[1]
   covest = cov(X)
-  fisherdata = atanh(extractlower(cov2cor(covest)))
+  index = diag(covest) > .Machine$double.eps
+  fisherdata = atanh(extractlower(cov2cor(covest[index, index])))
   if (estpi0){
     if (length(fisherdata) > 5000){
       x = makeobject(fisherdata, method = "npnormllw", order = order, beta = sqrt(1 / (n - 3)))
@@ -135,7 +164,33 @@ covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
 
   postmean = posteriormean(fisherdata, x$result, fun = tanh)
 
-  ans = returnlower(postmean)
+  ans = diag(nrow = p, ncol = p)
+
+  ans[index, index] = returnlower(postmean)
+
+  ans = CorrelationMatrix(ans, b = rep(1, p), tol = 1e-3)$CorrMat
+
+  varest = sqrt(diag(covest))
+
+  ans * varest * rep(varest, rep(length(varest), length(varest)))
+}
+
+#' @rdname covestEB
+#' @export
+covestEB.cor = function(X, verbose = FALSE){
+  p = dim(X)[2]
+  n = dim(X)[1]
+  covest = cov(X)
+  index = diag(covest) > .Machine$double.eps
+  data = extractlower(cov2cor(covest[index, index]))
+  x = makeobject(data, beta = n, method = "npnormcll")
+  r = computemixdist(x, verbose = verbose)
+
+  postmean = posteriormean(data, x$result)
+
+  ans = diag(nrow = p, ncol = p)
+
+  ans[index, index] = returnlower(postmean)
 
   ans = CorrelationMatrix(ans, b = rep(1, p), tol = 1e-3)$CorrMat
 
