@@ -41,12 +41,8 @@ npnormcll = R6::R6Class("npnormcll",
                         private$gridpoints = seq(from = min(self$data), to = max(self$data), length.out = grid)
                       },
                       initpoints = function(){
-                        rx = range(self$data)
-                        breaks = pmax(ceiling(diff(rx) / (5 / sqrt(self$beta))), 10)   # number of breaks
-                        r = whist(self$data, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
-                        r$density = pmax(0, r$density  / sum(r$density) - pnpnormc(r$breaks[-1], mu0 = self$mu0fixed, pi0 = self$pi0fixed, n = self$beta) +
-                                           pnpnormc(r$breaks[-length(r$breaks)], mu0 = self$mu0fixed, pi0 = self$pi0fixed, n = self$beta))
-                        list(pt = r$mids[r$density != 0], pr = r$density[r$density != 0] / sum(r$density))
+                        self$setgridpoints()
+                        list(pt = private$gridpoints, pr = rep(1 / length(private$gridpoints), length(private$gridpoints)))
                       },
                       beta = NULL,
                       type = "npnormc",

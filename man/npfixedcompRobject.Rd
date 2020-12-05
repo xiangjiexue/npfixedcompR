@@ -83,7 +83,7 @@ the length, fixed support points, structural parameter and any precomputed value
 fixed support points, the structural parameter and any precomputed values related to the change of
 the fixed support points.
 \item \code{lossfunction} (public) : THe function for computing the loss function given a mixing distribution.
-\item \code{setflexden} (public) : This function is used to set the precomputed values for the performance
+\item \code{setflexden} (public) : This function is used to set the precomputed values for performance
 purposes.
 \item \code{gradientfunction} (public) : This function computes the gradient for the implemented families.
 The output is a list of length 3: The gradient \code{d0}, the first derivative with respect to the location
