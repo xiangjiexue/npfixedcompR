@@ -217,7 +217,7 @@ whist = function(x, w=1, breaks="Sturges", plot=TRUE, freq=NULL,
                  xlim=NULL, ylim=NULL, xlab="Data", ylab=NULL, main=NULL,
                  add=FALSE, col=NULL, border=NULL, lwd=1, ...) {
   r = hist(x, breaks=breaks, plot=FALSE)
-  breaks = r$breaks
+  breaks = pmin(pmax(r$breaks, min(x)), max(x)) # the breaks can not exceed the range
   i = cut(x, breaks, include.lowest=TRUE)
   f = tapply(rep(w,len=length(i)), i, sum)            # frequency
   f[is.na(f)] = 0
