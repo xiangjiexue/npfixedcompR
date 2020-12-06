@@ -1,5 +1,5 @@
 dnormc = function(x, mean = 0, n, log = FALSE){
-  if (any(abs(x) >= 1) | any(abs(mean) >= 1))
+  if (any(abs(x) > 1) | any(abs(mean) > 1))
     stop("Error in specifying data or mean")
   LLL = max(length(x), length(mean))
   xx = rep(x, length.out = LLL)
@@ -8,7 +8,7 @@ dnormc = function(x, mean = 0, n, log = FALSE){
 }
 
 pnormc = function(x, mean = 0, n, lower.tail = TRUE, log.p = FALSE){
-  if (any(abs(x) >= 1) | any(abs(mean) >= 1))
+  if (any(abs(x) > 1) | any(abs(mean) > 1))
     stop("Error in specifying data or mean")
   LLL = max(length(x), length(mean))
   xx = rep(x, length.out = LLL)
@@ -41,8 +41,12 @@ npnormcll = R6::R6Class("npnormcll",
                         private$gridpoints = seq(from = min(self$data), to = max(self$data), length.out = grid)
                       },
                       initpoints = function(){
-                        list(pt = seq(from = min(self$data), to = max(self$data), length.out = 10),
-                             pr = rep(1 / 10, 10))
+                        rx = range(self$data)
+                        breaks = pmax(ceiling(diff(rx) / (5 / sqrt(self$beta))), 10)   # number of breaks
+                        r = whist(self$data, breaks = breaks, probability = TRUE, plot = FALSE, warn.unused = FALSE)
+                        r$density = pmax(0, r$density  / sum(r$density) - pnpnormc(r$breaks[-1], mu0 = self$mu0fixed, pi0 = self$pi0fixed, n = self$beta) +
+                                           pnpnormc(r$breaks[-length(r$breaks)], mu0 = self$mu0fixed, pi0 = self$pi0fixed, n = self$beta))
+                        list(pt = r$mids[r$density != 0], pr = r$density[r$density != 0] / sum(r$density))
                       },
                       beta = NULL,
                       type = "npnormc",
@@ -132,7 +136,7 @@ npnormcll = R6::R6Class("npnormcll",
                     private = list(
                       precompute = NULL,
                       flexden = NULL,
-                      mflag = "d1",
+                      mflag = "d0",
                       S1 = NULL
                     ))
 
