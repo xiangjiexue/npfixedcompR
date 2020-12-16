@@ -23,7 +23,9 @@ passed to the computation is greater than 5000.}
 \item{verbose}{logical; If TRUE, the intermediate results will be shown.}
 }
 \value{
-a covariance matrix estimate of size p * p.
+a list. a covariance matrix estimate of size p * p is given in mat,
+whether correction is done is given in correction, and the method for
+computing the density of sample correlation coefficients is given in method.
 }
 \description{
 Estimating covariance matrix using Empirical Bayes

@@ -130,7 +130,9 @@ posteriormean.npnormc = function(x, result, fun = function(x) x){
 #' @param order the level of binning to use when the number of observations
 #' passed to the computation is greater than 5000.
 #' @param verbose logical; If TRUE, the intermediate results will be shown.
-#' @return a covariance matrix estimate of size p * p.
+#' @return a list. a covariance matrix estimate of size p * p is given in mat,
+#' whether correction is done is given in correction, and the method for
+#' computing the density of sample correlation coefficients is given in method.
 #' @rdname covestEB
 #' @examples
 #' n = 100; p = 50
@@ -168,11 +170,14 @@ covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
 
   ans[index, index] = returnlower(postmean)
 
-  ans = CorrelationMatrix(ans, b = rep(1, p), tol = 1e-3)$CorrMat
+  ans1 = CorrelationMatrix(ans, b = rep(1, p), tol = 1e-3)
+  ans = ans1$CorrMat
 
   varest = sqrt(diag(covest))
 
-  ans * varest * rep(varest, rep(length(varest), length(varest)))
+  list(mat = ans * varest * rep(varest, rep(length(varest), length(varest))),
+       correction = ifelse(ans1$iterations == 0, FALSE, TRUE),
+       method = class(x)[1])
 }
 
 #' @rdname covestEB
@@ -192,11 +197,14 @@ covestEB.cor = function(X, verbose = FALSE){
 
   ans[index, index] = returnlower(postmean)
 
-  ans = CorrelationMatrix(ans, b = rep(1, p), tol = 1e-3)$CorrMat
+  ans1 = CorrelationMatrix(ans, b = rep(1, p), tol = 1e-3)
+  ans = ans1$CorrMat
 
   varest = sqrt(diag(covest))
 
-  ans * varest * rep(varest, rep(length(varest), length(varest)))
+  list(mat = ans * varest * rep(varest, rep(length(varest), length(varest))),
+       correction = ifelse(ans1$iterations == 0, FALSE, TRUE),
+       method = class(x)[1])
 }
 
 #' plot the mapping between the original observations and its posterior mean
