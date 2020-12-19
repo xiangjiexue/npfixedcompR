@@ -1,19 +1,13 @@
 dnormc = function(x, mean = 0, n, log = FALSE){
   if (any(abs(x) > 1) | any(abs(mean) > 1))
     stop("Error in specifying data or mean")
-  LLL = max(length(x), length(mean))
-  xx = rep(x, length.out = LLL)
-  meanx = rep(mean, length.out = LLL)
-  dnorm(xx, mean = meanx, sd = (1 - meanx^2) / sqrt(n), log = log)
+  dnorm(x, mean = mean, sd = (1 - mean^2) / sqrt(n), log = log)
 }
 
 pnormc = function(x, mean = 0, n, lower.tail = TRUE, log.p = FALSE){
   if (any(abs(x) > 1) | any(abs(mean) > 1))
     stop("Error in specifying data or mean")
-  LLL = max(length(x), length(mean))
-  xx = rep(x, length.out = LLL)
-  meanx = rep(mean, length.out = LLL)
-  pnorm(xx, mean = meanx, sd = (1 - meanx^2) / sqrt(n), lower.tail = lower.tail, log.p = log.p)
+  pnorm(x, mean = mean, sd = (1 - mean^2) / sqrt(n), lower.tail = lower.tail, log.p = log.p)
 }
 
 dnpnormc = function(x, mu0 = 0, pi0 = 0, n, log = FALSE){
