@@ -329,24 +329,6 @@ npfixedcompR = R6::R6Class("npfixedcompR",
                            }
                            list(pt = mu0, pr = pi0)
                          },
-                         compareattr = function(mu0, pi0){
-                           if (is.null(private$flexden)){
-                             c(TRUE, TRUE)
-                           }else{
-                             ans = c(FALSE, FALSE)
-                             if (length(mu0) != length(attr(private$flexden, "mu0"))){
-                               ans = ans | c(TRUE, FALSE)
-                             }else{
-                               ans = ans | c(sum((mu0 - attr(private$flexden, "mu0"))^2) > 1e-12, FALSE)
-                             }
-                             if (length(pi0) != length(attr(private$flexden, "pi0"))){
-                               ans = ans | c(FALSE, TRUE)
-                             }else{
-                               ans = ans | c(FALSE, sum((pi0 - attr(private$flexden, "pi0"))^2) > 1e-12)
-                             }
-                             ans
-                           }
-                         },
                          solvegradientmultiple = function(mu0, pi0, tol = 1e-6){
                            points = self$printgridpoints()
                            switch(private$mflag,

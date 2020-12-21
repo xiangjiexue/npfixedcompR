@@ -10,9 +10,6 @@ npnormcvm = R6::R6Class("npnormcvm",
                            if (!missing(pi0)) self$pi0fixed = pi0
                            if (!missing(beta)) self$beta = beta
                            self$estpi0dS()
-                           private$flexden = list(flexden = numeric(self$len), fullden = numeric(self$len))
-                           attr(private$flexden, "mu0") = NULL
-                           attr(private$flexden, "pi0") = NULL
                            private$precompute = private$S1$a2 - pnpnorm(self$data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta)
                          },
                          modified = function(mu0, pi0, beta){
@@ -22,37 +19,21 @@ npnormcvm = R6::R6Class("npnormcvm",
                            private$precompute = private$S1$a2 - pnpnorm(self$data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta)
                          },
                          lossfunction = function(mu0, pi0){
-                           if (any(self$compareattr(mu0, pi0))){
-                             self$setflexden(mu0, pi0)
-                           }
-                           sum(private$flexden$fullden^2)
-                         },
-                         setflexden = function(mu0, pi0){
-                           r = self$compareattr(mu0, pi0)
-                           if (r[1]){
-                             private$flexden$dens = pnorm(self$data, mean = rep(mu0, rep(self$len, length(mu0))), sd = self$beta)
-                             dim(private$flexden$dens) = c(self$len, length(mu0))
-                           }
-                           temp = drop(private$flexden$dens %*% pi0)
-                           private$flexden$flexden = temp
-                           private$flexden$fullden = temp - private$precompute
-                           attr(private$flexden, "mu0") = mu0
-                           attr(private$flexden, "pi0") = pi0
+                           sum((pnpnorm(self$data, mu0 = mu0, pi0 = pi0, sd = self$beta) - private$precompute)^2)
                          },
                          gradientfunction = function(mu, mu0, pi0, order = c(1, 0, 0)){
-                           if (any(self$compareattr(mu0, pi0))){
-                             self$setflexden(mu0, pi0)
-                           }
+                           flexden = pnpnorm(self$data, mu0 = mu0, pi0 = pi0, sd = self$beta)
+                           fullden = flexden - private$precompute
                            murep = self$data - rep(mu, rep(self$len, length(mu)))
                            ans = vector("list", 3)
                            names(ans) = c("d0", "d1", "d2")
                            if (order[1] == 1){
                              temp = pnorm(murep, sd = self$beta)
                              private$flexden$temp = matrix(temp, ncol = length(mu))
-                             ans$d0 = .colSums((temp * sum(pi0) - private$flexden$flexden) * private$flexden$fullden, m = self$len, n = length(mu))
+                             ans$d0 = .colSums((temp * sum(pi0) - flexden) * fullden, m = self$len, n = length(mu))
                            }
                            if (any(order[2:3] == 1)){
-                             temp = dnorm(murep, sd = self$beta) * private$flexden$fullden
+                             temp = dnorm(murep, sd = self$beta) * fullden
                            }
                            if (order[2] == 1){
                              ans$d1 = .colSums(temp, m = self$len, n = length(mu)) * -2 * sum(pi0)
@@ -64,11 +45,10 @@ npnormcvm = R6::R6Class("npnormcvm",
                            ans
                          },
                          computeweights = function(mu0, pi0, newweights, tol = 1e-6){
-                           if (any(self$compareattr(mu0, pi0))){
-                             self$setflexden(mu0, pi0)
-                           }
                            mu0new = c(mu0, newweights)
-                           S = cbind(private$flexden$dens, private$flexden$temp)
+                           S = pnorm(self$data, mean = rep(mu0new, rep(self$len, length(mu0new))),
+                                     sd = self$beta)
+                           dim(S) = c(self$len, length(mu0new))
                            pi0new = pnnls(S, private$precompute, sum = 1 - sum(self$pi0fixed))$x
                            self$collapsemix(mu0new, pi0new, tol)
                          },

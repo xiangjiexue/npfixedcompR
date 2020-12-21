@@ -15,9 +15,6 @@ npnormcvmw = R6::R6Class("npnormcvmw",
                             if (!missing(pi0)) self$pi0fixed = pi0
                             if (!missing(beta)) self$beta = beta
                             self$estpi0dS()
-                            private$flexden = list(flexden = numeric(self$len), fullden = numeric(self$len))
-                            attr(private$flexden, "mu0") = NULL
-                            attr(private$flexden, "pi0") = NULL
                             private$precompute = private$S1$a2 - pnpdiscnorm(self$data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta, h = self$h)
                           },
                           modified = function(mu0, pi0, beta){
@@ -27,37 +24,20 @@ npnormcvmw = R6::R6Class("npnormcvmw",
                             private$precompute = private$S1$a2 - pnpdiscnorm(self$data, mu0 = self$mu0fixed, pi0 = self$pi0fixed, sd = self$beta, h = self$h)
                           },
                           lossfunction = function(mu0, pi0){
-                            if (any(self$compareattr(mu0, pi0))){
-                              self$setflexden(mu0, pi0)
-                            }
-                            sum(private$flexden$fullden^2 * self$w)
-                          },
-                          setflexden = function(mu0, pi0){
-                            r = self$compareattr(mu0, pi0)
-                            if (r[1]){
-                              private$flexden$dens = pdiscnorm(self$data, mean = rep(mu0, rep(self$len, length(mu0))), sd = self$beta, h = self$h)
-                              dim(private$flexden$dens) = c(self$len, length(mu0))
-                            }
-                            temp = drop(private$flexden$dens %*% pi0)
-                            private$flexden$flexden = temp
-                            private$flexden$fullden = temp - private$precompute
-                            attr(private$flexden, "mu0") = mu0
-                            attr(private$flexden, "pi0") = pi0
+                            sum((pnpdiscnorm(self$data, mu0 = mu0, pi0 = pi0, sd = self$beta, h = self$h) - private$precompute)^2 * self$w)
                           },
                           gradientfunction = function(mu, mu0, pi0, order = c(1, 0, 0)){
-                            if (any(self$compareattr(mu0, pi0))){
-                              self$setflexden(mu0, pi0)
-                            }
+                            flexden = pnpdiscnorm(self$data, mu0 = mu0, pi0 = pi0, sd = self$beta, h = self$h)
+                            fullden = flexden - private$precompute
                             murep = self$data - rep(mu, rep(self$len, length(mu)))
                             ans = vector("list", 3)
                             names(ans) = c("d0", "d1", "d2")
                             if (order[1] == 1){
                               temp = pdiscnorm(murep, sd = self$beta, h = self$h)
-                              private$flexden$temp = matrix(temp, ncol = length(mu))
-                              ans$d0 = .colSums((temp * sum(pi0) - private$flexden$flexden) * private$flexden$fullden * self$w, m = self$len, n = length(mu))
+                              ans$d0 = .colSums((temp * sum(pi0) - flexden) * fullden * self$w, m = self$len, n = length(mu))
                             }
                             if (any(order[2:3] == 1)){
-                              temp = dnorm(murep + self$h, sd = self$beta) * private$flexden$fullden * self$w
+                              temp = dnorm(murep + self$h, sd = self$beta) * fullden * self$w
                             }
                             if (order[2] == 1){
                               ans$d1 = .colSums(temp, m = self$len, n = length(mu)) * -2 * sum(pi0)
@@ -69,11 +49,10 @@ npnormcvmw = R6::R6Class("npnormcvmw",
                             ans
                           },
                           computeweights = function(mu0, pi0, newweights, tol = 1e-6){
-                            if (any(self$compareattr(mu0, pi0))){
-                              self$setflexden(mu0, pi0)
-                            }
                             mu0new = c(mu0, newweights)
-                            S = cbind(private$flexden$dens, private$flexden$temp)
+                            S = pdiscnorm(self$data, mean = rep(mu0new, rep(self$len, length(mu0new))),
+                                          sd = self$beta, h = self$h)
+                            dim(S) = c(self$len, length(mu0new))
                             pi0new = pnnls(S * sqrt(self$w), private$precompute * sqrt(self$w), sum = 1 - sum(self$pi0fixed))$x
                             self$collapsemix(mu0new, pi0new, tol)
                           },

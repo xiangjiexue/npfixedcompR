@@ -5,7 +5,7 @@
 \alias{covestEB.cor}
 \title{Estimating Covariance Matrix using Empirical Bayes}
 \usage{
-covestEB(X, estpi0 = FALSE, order = -3, verbose = FALSE)
+covestEB(X, estpi0 = FALSE, order = -3, verbose = FALSE, force.nonbin = FALSE)
 
 covestEB.cor(X, verbose = FALSE)
 }
@@ -21,6 +21,8 @@ assume sparsity.}
 passed to the computation is greater than 5000.}
 
 \item{verbose}{logical; If TRUE, the intermediate results will be shown.}
+
+\item{force.nonbin}{logical; If TRUE, no binning is performce by force.}
 }
 \value{
 a list. a covariance matrix estimate of size p * p is given in mat,

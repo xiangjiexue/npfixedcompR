@@ -130,6 +130,7 @@ posteriormean.npnormc = function(x, result, fun = function(x) x){
 #' @param order the level of binning to use when the number of observations
 #' passed to the computation is greater than 5000.
 #' @param verbose logical; If TRUE, the intermediate results will be shown.
+#' @param force.nonbin logical; If TRUE, no binning is performce by force.
 #' @return a list. a covariance matrix estimate of size p * p is given in mat,
 #' whether correction is done is given in correction, and the method for
 #' computing the density of sample correlation coefficients is given in method.
@@ -140,7 +141,8 @@ posteriormean.npnormc = function(x, result, fun = function(x) x){
 #' r = covestEB(X)
 #' r2 = covestEB.cor(X)
 #' @export
-covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
+covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE,
+                    force.nonbin = FALSE){
   p = dim(X)[2]
   n = dim(X)[1]
   covest = cov(X)
@@ -155,7 +157,7 @@ covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
       r = estpi0(x, verbose = verbose, val = 1)
     }
   }else{
-    if (length(fisherdata) > 5000){
+    if (length(fisherdata) > 5000 & !force.nonbin){
       x = makeobject(fisherdata, method = "npnormllw", order = order, beta = sqrt(1 / (n - 3)))
       r = computemixdist(x, verbose = verbose)
     }else{
@@ -178,6 +180,7 @@ covestEB = function(X, estpi0 = FALSE, order = -3, verbose = FALSE){
   list(mat = ans2 * varest * rep(varest, rep(length(varest), length(varest))),
        correction = ifelse(ans1$iterations == 0, FALSE, TRUE),
        correction.Fnorm = norm(ans2 - ans, type = "F"),
+       mix.dist = x$result,
        method = class(x)[1])
 }
 
@@ -206,6 +209,7 @@ covestEB.cor = function(X, verbose = FALSE){
   list(mat = ans2 * varest * rep(varest, rep(length(varest), length(varest))),
        correction = ifelse(ans1$iterations == 0, FALSE, TRUE),
        correction.Fnorm = norm(ans2 - ans, type = "F"),
+       mix.dist = x$result,
        method = class(x)[1])
 }
 

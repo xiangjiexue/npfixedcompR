@@ -42,6 +42,25 @@ pnpnorm = function(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE
 
 #' @rdname npnorm
 #' @export
+dnpnorm1 = function(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE){
+  if (length(mu0) != length(pi0))
+    stop("Length mismatch")
+  j0 = pi0 == 0
+  if (sum(!j0) > 0){
+    temp = dnorm(x, mean = rep(mu0[!j0], rep(length(x), sum(!j0))), sd = sd, log = TRUE) +
+      rep(log(pi0[!j0]), rep(length(x), sum(!j0)))
+    dim(temp) = c(length(x), sum(!j0))
+    maxcoef = apply(temp, 1, max)
+    temp = log(rowSums(exp(temp - maxcoef))) + maxcoef
+  }else{
+    temp = rep(-Inf, length(x))
+  }
+
+  if (log.p) temp else exp(temp)
+}
+
+#' @rdname npnorm
+#' @export
 pnpnorm1 = function(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE){
   if (length(mu0) != length(pi0))
     stop("Length mismatch")
@@ -96,10 +115,7 @@ logspace.sub = function(lx, ly){
 #' @rdname discnorm
 #' @export
 ddiscnorm = function(x, mean = 0, sd = 1, h = 1, log = FALSE){
-  LLL = max(length(x), length(mean))
-  xx = rep(x, length.out = LLL)
-  meanx = rep(mean, length.out = LLL)
-  temp = logspace.sub(pnorm(xx + h, meanx, sd, log.p = TRUE), pnorm(xx, meanx, sd, log.p = TRUE))
+  temp = logspace.sub(pnorm(x + h, mean, sd, log.p = TRUE), pnorm(x, mean, sd, log.p = TRUE))
   if (log) temp else exp(temp)
 }
 

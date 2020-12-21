@@ -3,12 +3,15 @@
 \name{dnpnorm}
 \alias{dnpnorm}
 \alias{pnpnorm}
+\alias{dnpnorm1}
 \alias{pnpnorm1}
 \title{non-parametric normal distribution}
 \usage{
 dnpnorm(x, mu0 = 0, pi0 = 1, sd = 1, log = FALSE)
 
 pnpnorm(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE)
+
+dnpnorm1(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE)
 
 pnpnorm1(x, mu0 = 0, pi0 = 1, sd = 1, lower.tail = TRUE, log.p = FALSE)
 }
